@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.1
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -23,9 +23,9 @@ function isint(n) {
 }
 
 var isOld = document.querySelector('.bilibili-player-auxiliary-area');
-var isBangumi = location.pathname.indexOf('bangumi') !== -1;
+var noNewplayer = location.pathname.indexOf('bangumi') !== -1 || location.pathname.indexOf('watchlater') !== -1;
 
-if(!isOld && !isBangumi) {
+if(!isOld && !noNewplayer) {
     // 新版
     var set = JSON.parse(localStorage.bilibili_player_settings);
     console.log('fontsize', set.setting_config.fontsize);
