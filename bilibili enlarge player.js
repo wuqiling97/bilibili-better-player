@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.1.2
+// @version      0.2.0
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 
-function danmuFontsize(size) {
+function setDanmuFontsize(size) {
     var s = JSON.parse(localStorage.bilibili_player_settings);
     s.setting_config.fontsize = size;
     localStorage.bilibili_player_settings = JSON.stringify(s);
@@ -32,7 +32,11 @@ if(!isOld && !noNewplayer) {
     console.log('fontsize', set.setting_config.fontsize);
     var fontsize = set.setting_config.fontsize;
     if(fontsize >= 1 || !isint(fontsize / 0.2)) {
-        danmuFontsize(0.6);
+        if(screen.width > 1500) {
+            setDanmuFontsize(0.8);
+        } else {
+            setDanmuFontsize(0.6);
+        }
     }
 
     Math.clamp = function(val, l, h) {
@@ -63,8 +67,7 @@ if(!isOld && !noNewplayer) {
             , t = 350 // 右侧栏+margin 320+30
             , height = document.body.offsetHeight
             , width = document.body.offsetWidth
-            // , n = parseInt(16 * (.743 * height - 108.7) / 9) // 用height限制宽度
-            , n = parseInt(16 * (height - eleTotHeight) / 9)
+            , n = parseInt(16 * (height - eleTotHeight) / 9) // 用height限制宽度
             , r = width - 152 - t // 用width限制
             , d = Math.min(r, n);
         d = Math.clamp(d, 638, 1280);
@@ -108,7 +111,7 @@ if(!isOld && !noNewplayer) {
     setSize();
 } else {
     console.log('old player, scroll only');
-    danmuFontsize(0.7);
+    setDanmuFontsize(0.7);
     if(isBangumi) {
         scrollTo(0, 400);
     } else if(isWatchlater) {
