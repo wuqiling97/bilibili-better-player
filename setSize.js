@@ -1,7 +1,6 @@
 function setSize() {
     var isWide = window.isWide
-        // , t = 400
-        , t = 800
+        , t = 350
         , height = document.body.offsetHeight
         , width = document.body.offsetWidth
         , n = parseInt(16 * (.743 * height - 108.7) / 9)

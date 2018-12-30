@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.1.1
+// @version      0.1.2
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -9,7 +9,6 @@
 // @match        *://www.bilibili.com/bangumi/play/ep*
 // @grant        none
 // ==/UserScript==
-
 
 
 function danmuFontsize(size) {
@@ -23,7 +22,9 @@ function isint(n) {
 }
 
 var isOld = document.querySelector('.bilibili-player-auxiliary-area');
-var noNewplayer = location.pathname.indexOf('bangumi') !== -1 || location.pathname.indexOf('watchlater') !== -1;
+var isBangumi = location.pathname.indexOf('bangumi') !== -1;
+var isWatchlater = location.pathname.indexOf('watchlater') !== -1;
+var noNewplayer = isBangumi || isWatchlater;
 
 if(!isOld && !noNewplayer) {
     // 新版
@@ -110,6 +111,10 @@ if(!isOld && !noNewplayer) {
     danmuFontsize(0.7);
     if(isBangumi) {
         scrollTo(0, 400);
+    } else if(isWatchlater) {
+        setTimeout(() => {
+            scrollTo(0, 397);
+        }, 200);
     } else {
         scrollTo(0, 423);
     }
