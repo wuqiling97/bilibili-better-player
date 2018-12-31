@@ -28,3 +28,18 @@ function setSize() {
         bofqi && (bofqi.style.position = "static")
     )
 }
+
+window.addEventListener("resize", setSize);
+window.PlayerAgent = {
+    player_widewin: function() {
+        window.scrollTo(0, 55),
+        window.isWide = true,
+        setSize();
+        console.log('haha');
+    },
+    player_fullwin: function(e) {
+        window.scrollTo(0, 0),
+        window.isWide = false,
+        setSize()
+    }
+};
