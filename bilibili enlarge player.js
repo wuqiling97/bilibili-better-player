@@ -99,6 +99,7 @@ if(!isOld && !noNewplayer) {
             pwrap && (pwrap.style.height = "auto"),
             bofqi && (bofqi.style.position = "static")
         );
+        document.querySelector('.l-con').style.width = 'auto';
     }
 
     setSize();
@@ -107,6 +108,8 @@ if(!isOld && !noNewplayer) {
         // 0.21.3 调整元素顺序
         console.log('rearrange');
         $('.v-wrap').css('margin-top', '10px');
+        $('.bilibili-player-video').css('padding', '0px 0px');
+
         let title = $('#viewbox_report');
         title.remove();
         title.css('margin-top', '8px');
@@ -115,7 +118,7 @@ if(!isOld && !noNewplayer) {
     }
 
     function wrap() {
-        if(!document.querySelector('span.like.on')) {
+        if(document.querySelector('span.like').innerText === '--') {
             setTimeout(wrap, 500);
             return;
         }
