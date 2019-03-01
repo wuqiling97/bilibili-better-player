@@ -6,7 +6,7 @@
 // @author       You
 // @match        *://www.bilibili.com/video/av*
 // @match        *://www.bilibili.com/watchlater/*
-// @match        *://www.bilibili.com/bangumi/play/ep*
+// @match        *://www.bilibili.com/bangumi/play/*
 // @grant        none
 // @require      http://s1.hdslb.com/bfs/static/jinkela/long/js/jquery/jquery1.7.2.min.js
 // ==/UserScript==
@@ -100,6 +100,7 @@ if(!isOld && !noNewplayer) {
             bofqi && (bofqi.style.position = "static")
         );
         document.querySelector('.l-con').style.width = 'auto';
+        document.querySelector('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
     }
 
     setSize();
