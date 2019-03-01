@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.3.0
+// @version      0.3.1
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -27,6 +27,7 @@ function isBigscreen() {
 }
 
 var isOld = document.querySelector('.bilibili-player-auxiliary-area');
+// location: url相关
 var isBangumi = location.pathname.indexOf('bangumi') !== -1;
 var isWatchlater = location.pathname.indexOf('watchlater') !== -1;
 var noNewplayer = isBangumi || isWatchlater;
@@ -53,10 +54,10 @@ if(!isOld && !noNewplayer) {
     /*
     高度数据：
     header 50
-    播放器上方margin 20
+    标题上方margin 20
+    标题 49.1 margin-bottom 16
     弹幕设置 46
-    标题 49.1 margin 16
-    操作 28+8+1 margin 12
+    操作 28 padding+border bottom 13 margin-top 16
     up 40 margin: 16 12
     */
 
@@ -104,12 +105,12 @@ if(!isOld && !noNewplayer) {
     }
 
     setSize();
+    $('.bilibili-player-video').css('margin', '0px 0px');
 
+    // 0.24.2 调整元素顺序
     function rearrange() {
-        // 0.21.3 调整元素顺序
         console.log('rearrange');
         $('.v-wrap').css('margin-top', '10px');
-        $('.bilibili-player-video').css('padding', '0px 0px');
 
         let title = $('#viewbox_report');
         title.remove();
@@ -118,6 +119,7 @@ if(!isOld && !noNewplayer) {
         pwrap.after(title);
     }
 
+    // 等待页面加载完毕再rearrange
     function wrap() {
         if(document.querySelector('span.like').innerText === '--') {
             setTimeout(wrap, 500);
