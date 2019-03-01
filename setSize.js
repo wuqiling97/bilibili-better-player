@@ -44,7 +44,7 @@ window.PlayerAgent = {
     }
 };
 
-// 更新历史 0.21.3-98ac136
+// 版本 0.21.3-98ac136
 function setSize() {
     var e = window.isWide
       , t = 350
@@ -65,6 +65,37 @@ function setSize() {
       , h = document.querySelector("#playerWrap");
     vwrap && (vwrap.style.width = a + "px",
     vwrap.style.padding = l + "px"),
+    u && (u.style.width = a - (e ? 0 : t) + "px",
+    u.style.height = s + "px"),
+    c && (c.style.width = a - t + "px"),
+    e ? (y && (y.style.height = s - 0 + "px"),
+    h && (h.style.height = s - 0 + "px"),
+    u && (u.style.position = "absolute")) : (y && (y.style.height = "auto"),
+    h && (h.style.height = "auto"),
+    u && (u.style.position = "static"))
+}
+
+// 版本 0.24.2-67b484e
+function setSize() {
+    var e = window.isWide
+      , t = 350
+      , i = document.body.offsetHeight
+      , o = document.body.offsetWidth
+      , n = parseInt(16 * (.743 * i - 108.7) / 9)
+      , r = o - 152 - t
+      , d = r < n ? r : n;
+    d < 638 && (d = 638),
+    1280 < d && (d = 1280);
+    var s, a = d + t;
+    s = window.hasBlackSide && !window.isWide ? Math.round((d - 14 + (e ? t : 0)) * (9 / 16) + 46) + 96 : Math.round((d + (e ? t : 0)) * (9 / 16)) + 46;
+    var l = "0 " + (o < a + 152 ? 76 : 0)
+      , w = document.querySelector(".v-wrap")
+      , c = document.querySelector(".l-con")
+      , u = document.querySelector("#bofqi")
+      , y = document.querySelector("#danmukuBox")
+      , h = document.querySelector("#playerWrap");
+    w && (w.style.width = a + "px",
+    w.style.padding = l + "px"),
     u && (u.style.width = a - (e ? 0 : t) + "px",
     u.style.height = s + "px"),
     c && (c.style.width = a - t + "px"),
