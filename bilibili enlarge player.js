@@ -8,7 +8,7 @@
 // @match        *://www.bilibili.com/watchlater/*
 // @match        *://www.bilibili.com/bangumi/play/*
 // @grant        none
-// @require      http://s1.hdslb.com/bfs/static/jinkela/long/js/jquery/jquery1.7.2.min.js
+// @require      https://static.hdslb.com/js/jquery.min.js
 // ==/UserScript==
 
 
@@ -26,11 +26,18 @@ function isBigscreen() {
     return screen.width > 1500;
 }
 
+Math.clamp = function(val, l, h) {
+    (val < l) && (val = l);
+    (val > h) && (val = h);
+    return val;
+};
+
 var isOld = document.querySelector('.bilibili-player-auxiliary-area');
 // location: url相关
 var isBangumi = location.pathname.indexOf('bangumi') !== -1;
 var isWatchlater = location.pathname.indexOf('watchlater') !== -1;
-var noNewplayer = isBangumi || isWatchlater;
+var isNormal = !(isBangumi || isWatchlater);
+var noNewplayer = isWatchlater;
 
 if(!isOld && !noNewplayer) {
     // 新版
@@ -38,18 +45,11 @@ if(!isOld && !noNewplayer) {
     console.log('fontsize', set.setting_config.fontsize);
     var fontsize = set.setting_config.fontsize;
     setDanmuFontsize(0.6);
-
     // if(isBigscreen()) {
     //     setDanmuFontsize(0.8);
     // } else {
     //     setDanmuFontsize(0.6);
     // }
-
-    Math.clamp = function(val, l, h) {
-        (val < l) && (val = l);
-        (val > h) && (val = h);
-        return val;
-    };
 
     /*
     高度数据：
@@ -69,66 +69,71 @@ if(!isOld && !noNewplayer) {
         eleTotHeight += eleHeight[i] * eleShow[i];
     }
 
-    window.setSize = function() {
-        eleTotHeight = isBigscreen()? 230.1 : 221.1;
+    if(isNormal) {
+        window.setSize = function() {
+            eleTotHeight = isBigscreen()? 230.1 : 221.1;
 
-        var isWide = window.isWide
-            , t = 350 // 右侧栏+左右margin 320+30
-            , height = document.body.offsetHeight
-            , width = document.body.offsetWidth
-            , n = parseInt(16 * (height - eleTotHeight) / 9) // 用height限制宽度
-            , r = width - 152 - t // 用width限制，实为margin+iswide限制
-            , d = Math.min(r, n);
-        d = Math.clamp(d, 638, 1280);
-        var w = d + t
-            , h = Math.round((d + (isWide ? t : 0)) * (9 / 16)) + 46
-            , pad = "0 " + (width < w + 152 ? 76 : 0) // margin至少76
-            , u = document.querySelector(".stardust-video .bili-wrapper")
-            , vwrap = document.querySelector(".v-wrap")
-            , bofqi = document.querySelector("#bofqi")
-            , dmbox = document.querySelector("#danmukuBox")
-            , pwrap = document.querySelector("#playerWrap");
-        u && (u.style.width = w + "px", u.style.padding = pad + "px");
-        vwrap && (vwrap.style.width = w + "px", vwrap.style.padding = pad + "px");
-        bofqi && (bofqi.style.width = w - (isWide ? 0 : t) + "px", bofqi.style.height = h + "px");
-        isWide ? (
-            dmbox && (dmbox.style.height = h - 0 + "px"),
-            pwrap && (pwrap.style.height = h - 0 + "px"),
-            bofqi && (bofqi.style.position = "absolute")
-        ) : (
-            dmbox && (dmbox.style.height = "auto"),
-            pwrap && (pwrap.style.height = "auto"),
-            bofqi && (bofqi.style.position = "static")
-        );
-        document.querySelector('.l-con').style.width = 'auto';
-        document.querySelector('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
-    }
-
-    setSize();
-    $('.bilibili-player-video').css('margin', '0px 0px');
-
-    // 0.24.2 调整元素顺序
-    function rearrange() {
-        console.log('rearrange');
-        $('.v-wrap').css('margin-top', '10px');
-
-        let title = $('#viewbox_report');
-        title.remove();
-        title.css('margin-top', '8px');
-        let pwrap = $('#playerWrap');
-        pwrap.after(title);
-    }
-
-    // 等待页面加载完毕再rearrange
-    function wrap() {
-        if(document.querySelector('span.like').innerText === '--') {
-            setTimeout(wrap, 500);
-            return;
+            var isWide = window.isWide
+                , rcon_w = 350 // 右侧栏+左右栏margin 320+30
+                , height = document.body.offsetHeight
+                , width = document.body.offsetWidth
+                , thh = parseInt(16 * (height - eleTotHeight) / 9) // 用height限制宽度
+                , thw = width - 152 - rcon_w // 用width限制，实为margin+iswide限制
+                , d = Math.min(thw, thh);
+            d = Math.clamp(d, 638, 1280);
+            var w = d + rcon_w
+                , h = Math.round((d + (isWide ? rcon_w : 0)) * (9 / 16)) + 46
+                , pad = "0 " + (width < w + 152 ? 76 : 0) // margin至少76
+                , u = document.querySelector(".stardust-video .bili-wrapper")
+                , vwrap = document.querySelector(".v-wrap")
+                , bofqi = document.querySelector("#bofqi")
+                , dmbox = document.querySelector("#danmukuBox")
+                , pwrap = document.querySelector("#playerWrap");
+            u && (u.style.width = w + "px", u.style.padding = pad + "px");
+            vwrap && (vwrap.style.width = w + "px", vwrap.style.padding = pad + "px");
+            bofqi && (bofqi.style.width = w - (isWide ? 0 : rcon_w) + "px", bofqi.style.height = h + "px");
+            isWide ? (
+                dmbox && (dmbox.style.height = h - 0 + "px"),
+                pwrap && (pwrap.style.height = h - 0 + "px"),
+                bofqi && (bofqi.style.position = "absolute")
+            ) : (
+                dmbox && (dmbox.style.height = "auto"),
+                pwrap && (pwrap.style.height = "auto"),
+                bofqi && (bofqi.style.position = "static")
+            );
+            document.querySelector('.l-con').style.width = 'auto';
+            document.querySelector('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
         }
-        rearrange();
+
+        setSize();
+        $('.bilibili-player-video').css('margin', '0px 0px');
+
+        // 0.24.2 调整元素顺序
+        function rearrange() {
+            console.log('rearrange');
+            $('.v-wrap').css('margin-top', '10px');
+
+            let title = $('#viewbox_report');
+            title.remove();
+            title.css('margin-top', '8px');
+            let pwrap = $('#playerWrap');
+            pwrap.after(title);
+        }
+
+        // 等待页面加载完毕再rearrange
+        function wrap() {
+            if(document.querySelector('span.like').innerText === '--') {
+                setTimeout(wrap, 500);
+                return;
+            }
+            rearrange();
+        }
+
+        wrap();
+    } else if(isBangumi) {
+        $('#app').css('margin-top', '10px');
     }
 
-    wrap();
 } else {
     console.log('old player, scroll only');
     setDanmuFontsize(0.7);

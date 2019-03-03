@@ -105,3 +105,73 @@ function setSize() {
     h && (h.style.height = "auto"),
     u && (u.style.position = "static"))
 }
+//番剧
+function setSize() {
+    var e = md.specialCover ? 1070 : 1280
+      , i = 350
+      , o = $(window).height()
+      , t = $(window).width()
+      , n = Math.round(md.specialCover ? 16 * (o - 264) / 9 - i : 16 * (.743 * o - 108.7) / 9)
+      , a = t - 152 - i
+      , d = a < n ? a : n;
+    d < 638 && (d = 638),
+    e < d && (d = e);
+    var s = d + i
+      , overflow = t < s + 152;
+    if ($(".main-container").css({
+        width: overflow ? s + 76 : s,
+        paddingLeft: (overflow ? 76 : 0) + "px",
+        marginLeft: overflow ? "0" : "",
+        marginRight: overflow ? "0" : ""
+    }),
+    md.specialCover) {
+        var _ = Math.round(9 * s / 16 + 46);
+        $("#player_module").css({
+            height: _,
+            width: s,
+            paddingLeft: "",
+            left: overflow ? 76 : "",
+            transform: overflow ? "none" : "",
+            webkitTransform: overflow ? "none" : ""
+        }),
+        $(".special-cover").css({
+            height: _ + 218
+        }),
+        $(".plp-l").css({
+            paddingTop: _ + 24
+        }),
+        $(".plp-r").css({
+            marginTop: _ + 40
+        }),
+        $("#danmukuBox").css({
+            top: -(_ + 40)
+        })
+    } else {
+        var p = parseInt(9 * (d + (window.isWide ? i : 0)) / 16) + 46 + (window.hasBlackSide && !window.isWide ? 96 : 0);
+        $("#danmukuBox").css({
+            top: ""
+        }),
+        window.isWide ? ($("#player_module").css({
+            height: p - 0,
+            width: "",
+            paddingLeft: overflow ? 76 : "",
+            left: "",
+            transform: "",
+            webkitTransform: ""
+        }),
+        $(".plp-l").css({
+            paddingTop: p - 0
+        }),
+        $(".plp-r").css({
+            marginTop: p + 16
+        })) : ($("#player_module").css({
+            height: p - 0,
+            width: "",
+            paddingLeft: "",
+            left: "",
+            transform: "",
+            webkitTransform: ""
+        }),
+        $(".plp-l, .plp-r").removeAttr("style"))
+    }
+}
