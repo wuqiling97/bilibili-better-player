@@ -10,7 +10,17 @@
 // @grant        none
 // @require      https://static.hdslb.com/js/jquery.min.js
 // ==/UserScript==
+'use strict'
 
+Math.clamp = function(val, l, h) {
+    (val < l) && (val = l);
+    (val > h) && (val = h);
+    return val;
+};
+
+function log(...data) {
+    console.log('[TAMPER]', ...data);
+}
 
 function setDanmuFontsize(size) {
     var s = JSON.parse(localStorage.bilibili_player_settings);
@@ -26,23 +36,17 @@ function isBigscreen() {
     return screen.width > 1500;
 }
 
-Math.clamp = function(val, l, h) {
-    (val < l) && (val = l);
-    (val > h) && (val = h);
-    return val;
-};
-
-var isOld = document.querySelector('.bilibili-player-auxiliary-area');
+var isNew = document.querySelector('.has-stardust');
 // location: url相关
 var isBangumi = location.pathname.indexOf('bangumi') !== -1;
 var isWatchlater = location.pathname.indexOf('watchlater') !== -1;
 var isNormal = !(isBangumi || isWatchlater);
 var noNewplayer = isWatchlater;
 
-if(!isOld && !noNewplayer) {
+if(isNew && !noNewplayer) {
     // 新版
     var set = JSON.parse(localStorage.bilibili_player_settings);
-    console.log('fontsize', set.setting_config.fontsize);
+    log('fontsize', set.setting_config.fontsize);
     var fontsize = set.setting_config.fontsize;
     setDanmuFontsize(0.6);
     // isBigscreen() ? setDanmuFontsize(0.8) : setDanmuFontsize(0.6);
@@ -93,7 +97,7 @@ if(!isOld && !noNewplayer) {
 
         // 0.24.2 调整元素顺序
         function rearrange() {
-            console.log('rearrange');
+            log('rearrange');
             $('.v-wrap').css('margin-top', '10px');
 
             let title = $('#viewbox_report');
@@ -188,7 +192,7 @@ if(!isOld && !noNewplayer) {
     }
 
 } else {
-    console.log('old player, scroll only');
+    log('old player, scroll only');
     setDanmuFontsize(0.7);
     if(isBangumi) {
         scrollTo(0, 400);
