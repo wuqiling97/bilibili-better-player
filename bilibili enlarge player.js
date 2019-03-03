@@ -45,21 +45,7 @@ if(!isOld && !noNewplayer) {
     console.log('fontsize', set.setting_config.fontsize);
     var fontsize = set.setting_config.fontsize;
     setDanmuFontsize(0.6);
-    // if(isBigscreen()) {
-    //     setDanmuFontsize(0.8);
-    // } else {
-    //     setDanmuFontsize(0.6);
-    // }
-
-    /*
-    高度数据：
-    header 50
-    标题上方margin 20
-    标题 49.1 margin-bottom 16
-    弹幕设置 46
-    操作 28 padding+border bottom 13 margin-top 16
-    up 40 margin: 16 12
-    */
+    // isBigscreen() ? setDanmuFontsize(0.8) : setDanmuFontsize(0.6);
 
     // header, 播放器上方margin, 弹幕设置, 标题, 操作, up
     var eleHeight = [50, 20, 46, 49.1+16, 28+12, 40+16];
@@ -68,21 +54,20 @@ if(!isOld && !noNewplayer) {
     for(let i=0; i<eleShow.length; i++) {
         eleTotHeight += eleHeight[i] * eleShow[i];
     }
+    eleTotHeight = isBigscreen()? 230.1 : 221.1;
 
     if(isNormal) {
         window.setSize = function() {
-            eleTotHeight = isBigscreen()? 230.1 : 221.1;
-
             var isWide = window.isWide
                 , rcon_w = 350 // 右侧栏+左右栏margin 320+30
-                , height = document.body.offsetHeight
-                , width = document.body.offsetWidth
-                , thh = parseInt(16 * (height - eleTotHeight) / 9) // 用height限制宽度
+                , height = $(window).height()
+                , width = $(window).width()
+                , thh = Math.round(16 * (height*0.68) / 9) // 用height限制宽度
                 , thw = width - 152 - rcon_w // 用width限制，实为margin+iswide限制
-                , d = Math.min(thw, thh);
-            d = Math.clamp(d, 638, 1280);
-            var w = d + rcon_w
-                , h = Math.round((d + (isWide ? rcon_w : 0)) * (9 / 16)) + 46
+                , videoW = Math.min(thw, thh);
+            videoW = Math.clamp(videoW, 638, 1280);
+            var w = videoW + rcon_w
+                , h = Math.round((videoW + (isWide ? rcon_w : 0)) * (9 / 16)) + 46
                 , pad = "0 " + (width < w + 152 ? 76 : 0) // margin至少76
                 , u = document.querySelector(".stardust-video .bili-wrapper")
                 , vwrap = document.querySelector(".v-wrap")
@@ -103,10 +88,8 @@ if(!isOld && !noNewplayer) {
             );
             document.querySelector('.l-con').style.width = 'auto';
             document.querySelector('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
-        }
-
+        } // setSize
         setSize();
-        $('.bilibili-player-video').css('margin', '0px 0px');
 
         // 0.24.2 调整元素顺序
         function rearrange() {
@@ -114,10 +97,9 @@ if(!isOld && !noNewplayer) {
             $('.v-wrap').css('margin-top', '10px');
 
             let title = $('#viewbox_report');
-            title.remove();
-            title.css('margin-top', '8px');
             let pwrap = $('#playerWrap');
-            pwrap.after(title);
+            title.css('margin-top', '8px');
+            title.insertAfter('#playerWrap');
         }
 
         // 等待页面加载完毕再rearrange
@@ -131,6 +113,77 @@ if(!isOld && !noNewplayer) {
 
         wrap();
     } else if(isBangumi) {
+        window.setSize = function() {
+            var maxW = md.specialCover ? 1070 : 1280
+            , rcon_w = 350
+            , height = $(window).height()
+            , width = $(window).width()
+            , thh = Math.round(md.specialCover ? 16 * (height - 264) / 9 - rcon_w : 16 * (0.68 * height) / 9)
+            , thw = width - 152 - rcon_w
+            , videoW = thw < thh ? thw : thh;
+            videoW < 638 && (videoW = 638),
+            maxW < videoW && (videoW = maxW);
+            var appWidth = videoW + rcon_w
+            , overflow = width < appWidth + 152;
+
+            $(".main-container").css({
+                width: overflow ? appWidth + 76 : appWidth,
+                paddingLeft: (overflow ? 76 : 0) + "px",
+                marginLeft: overflow ? "0" : "",
+                marginRight: overflow ? "0" : ""
+            })
+            if (md.specialCover) {
+                var _ = Math.round(9 * appWidth / 16 + 46);
+                $("#player_module").css({
+                    height: _,
+                    width: appWidth,
+                    paddingLeft: "",
+                    left: overflow ? 76 : "",
+                    transform: overflow ? "none" : "",
+                    webkitTransform: overflow ? "none" : ""
+                }),
+                $(".special-cover").css({
+                    height: _ + 218
+                }),
+                $(".plp-l").css({
+                    paddingTop: _ + 24
+                }),
+                $(".plp-r").css({
+                    marginTop: _ + 40
+                }),
+                $("#danmukuBox").css({
+                    top: -(_ + 40)
+                })
+            } else {
+                var p = Math.round(9/16 * (videoW + (window.isWide ? rcon_w : 0))) + 46 + (window.hasBlackSide && !window.isWide ? 96 : 0);
+                $("#danmukuBox").css({
+                    top: ""
+                }),
+                window.isWide ? ($("#player_module").css({
+                    height: p - 0,
+                    width: "",
+                    paddingLeft: overflow ? 76 : "",
+                    left: "",
+                    transform: "",
+                    webkitTransform: ""
+                }),
+                $(".plp-l").css({
+                    paddingTop: p - 0
+                }),
+                $(".plp-r").css({
+                    marginTop: p + 16
+                })) : ($("#player_module").css({
+                    height: p - 0,
+                    width: "",
+                    paddingLeft: "",
+                    left: "",
+                    transform: "",
+                    webkitTransform: ""
+                }),
+                $(".plp-l, .plp-r").removeAttr("style"))
+            }
+        } // setSize
+        setSize();
         $('#app').css('margin-top', '10px');
     }
 

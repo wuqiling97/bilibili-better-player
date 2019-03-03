@@ -81,12 +81,13 @@ function setSize() {
       , t = 350
       , i = document.body.offsetHeight
       , o = document.body.offsetWidth
-      , n = parseInt(16 * (.743 * i - 108.7) / 9)
+      , n = parseInt(16 * (.743 * i - 108.7) / 9) //根据height限制宽度
       , r = o - 152 - t
       , d = r < n ? r : n;
     d < 638 && (d = 638),
     1280 < d && (d = 1280);
     var s, a = d + t;
+    // 有黑边，再加48x2给margin
     s = window.hasBlackSide && !window.isWide ? Math.round((d - 14 + (e ? t : 0)) * (9 / 16) + 46) + 96 : Math.round((d + (e ? t : 0)) * (9 / 16)) + 46;
     var l = "0 " + (o < a + 152 ? 76 : 0)
       , w = document.querySelector(".v-wrap")
@@ -106,29 +107,30 @@ function setSize() {
     u && (u.style.position = "static"))
 }
 //番剧
+//未知属性 specialCover
 function setSize() {
-    var e = md.specialCover ? 1070 : 1280
-      , i = 350
-      , o = $(window).height()
-      , t = $(window).width()
-      , n = Math.round(md.specialCover ? 16 * (o - 264) / 9 - i : 16 * (.743 * o - 108.7) / 9)
-      , a = t - 152 - i
-      , d = a < n ? a : n;
-    d < 638 && (d = 638),
-    e < d && (d = e);
-    var s = d + i
-      , overflow = t < s + 152;
+    var maxW = md.specialCover ? 1070 : 1280
+      , rcon_w = 350
+      , height = $(window).height()
+      , width = $(window).width()
+      , thh = Math.round(md.specialCover ? 16 * (height - 264) / 9 - rcon_w : 16 * (.743 * height - 108.7) / 9)
+      , thw = width - 152 - rcon_w
+      , videoW = thw < thh ? thw : thh;
+    videoW < 638 && (videoW = 638),
+    maxW < videoW && (videoW = maxW);
+    var appWidth = videoW + rcon_w
+      , overflow = width < appWidth + 152;
     if ($(".main-container").css({
-        width: overflow ? s + 76 : s,
+        width: overflow ? appWidth + 76 : appWidth,
         paddingLeft: (overflow ? 76 : 0) + "px",
         marginLeft: overflow ? "0" : "",
         marginRight: overflow ? "0" : ""
     }),
     md.specialCover) {
-        var _ = Math.round(9 * s / 16 + 46);
+        var _ = Math.round(9 * appWidth / 16 + 46);
         $("#player_module").css({
             height: _,
-            width: s,
+            width: appWidth,
             paddingLeft: "",
             left: overflow ? 76 : "",
             transform: overflow ? "none" : "",
@@ -147,7 +149,7 @@ function setSize() {
             top: -(_ + 40)
         })
     } else {
-        var p = parseInt(9 * (d + (window.isWide ? i : 0)) / 16) + 46 + (window.hasBlackSide && !window.isWide ? 96 : 0);
+        var p = parseInt(9 * (videoW + (window.isWide ? rcon_w : 0)) / 16) + 46 + (window.hasBlackSide && !window.isWide ? 96 : 0);
         $("#danmukuBox").css({
             top: ""
         }),
