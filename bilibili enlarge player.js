@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.4.2
+// @version      0.4.3
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -47,6 +47,15 @@ function isBigscreen() {
     return screen.width > 1500;
 }
 
+function conditionExec(condition, task, timeout) {
+    if(!condition()) {
+        // log('wait', timeout, 'for', task);
+        setTimeout(() => conditionExec(condition, task, timeout), timeout);
+        return;
+    }
+    task();
+}
+
 var isNew = !!$c('.has-stardust');
 // location: url相关
 var isBangumi = location.pathname.indexOf('bangumi') !== -1;
@@ -55,7 +64,7 @@ var isNormal = !(isBangumi || isWatchlater);
 var noNewplayer = isWatchlater;
 
 // 字号函数
-var userFontSize = 0.6;
+var userFontSize = 0.7;
 var newplayerFontSize = 0.8;
 var ratio = userFontSize / newplayerFontSize;
 
@@ -111,6 +120,7 @@ function fontSizeMain() {
             if(gmutationsList.length > 3) {
                 gmutationsList.shift();
             }
+            // 存储改过的ele防止多次修改
             var changedEle = [];
             for(let mutation of mutationsList) {
                 if(mutation.addedNodes.length > 0) {
@@ -131,13 +141,23 @@ function fontSizeMain() {
         })
         mainObserver.observe($c('.bilibili-player-video-danmaku'), {
             childList: true, subtree: true});
+        // function wait2observe() {
+        //     var dmbox = $c('.bilibili-player-video-danmaku');
+        //     if(!dmbox) {
+        //         setTimeout(wait2observe, 250);
+        //         return;
+        //     }
+        //     mainObserver.observe($c('.bilibili-player-video-danmaku'), {
+        //         childList: true, subtree: true});
+            
+        // }
+        // wait2observe();
     }
 }
 
 function listenVideoPartChange() {
     var observer = new MutationObserver(function(mutationsList) {
-        console.log('part', mutationsList);
-        log('视频P改变');
+        log('video element改变');
 
         // 切换清晰度时也会触发事件，故disconnect之前的监听
         mainObserver.disconnect();
@@ -146,6 +166,7 @@ function listenVideoPartChange() {
         setTimeout(listenVideoPartChange, 0);
         observer.disconnect();
     });
+    
     observer.observe($c('.bilibili-player-video'), {
         childList: true, 
         // subtree: true
@@ -157,8 +178,11 @@ if(isNew && !noNewplayer) {
     // 新版
     /// 自定义字号
     log('fontsize', getDanmuFontsize());
-    fontSizeMain();
-    listenVideoPartChange();
+    conditionExec(
+        () => $c('.bilibili-player-video-danmaku') && $c('.bilibili-player-video'),
+        () => {fontSizeMain(); listenVideoPartChange();},
+        250
+    );
 
     /// 扩大新版播放器，滚动旧版播放器到适合观看的位置
     if(isNormal) {
@@ -205,17 +229,21 @@ if(isNew && !noNewplayer) {
             title.css('margin-top', '8px');
             title.insertAfter('#playerWrap');
         }
-
+        
         // 等待页面加载完毕再rearrange
-        function wrap() {
-            if($c('span.like').innerText === '--') {
-                setTimeout(wrap, 500);
-                return;
-            }
-            rearrange();
-        }
+        conditionExec(
+            () => $c('span.like').innerText !== '--',
+            rearrange, 500
+        );
+        // function wrap() {
+        //     if($c('span.like').innerText === '--') {
+        //         setTimeout(wrap, 500);
+        //         return;
+        //     }
+        //     rearrange();
+        // }
 
-        wrap();
+        // wrap();
     } else if(isBangumi) {
         window.setSize = function() {
             var maxW = md.specialCover ? 1070 : 1280
