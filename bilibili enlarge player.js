@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.3.1
+// @version      0.4.0
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -27,6 +27,10 @@ function setDanmuFontsize(size) {
     s.setting_config.fontsize = size;
     localStorage.bilibili_player_settings = JSON.stringify(s);
 }
+function getDanmuFontsize() {
+    var s = JSON.parse(localStorage.bilibili_player_settings);
+    return s.setting_config.fontsize;
+}
 
 function isint(n) {
     return parseFloat(n.toFixed(5)) === Math.round(n);
@@ -43,23 +47,47 @@ var isWatchlater = location.pathname.indexOf('watchlater') !== -1;
 var isNormal = !(isBangumi || isWatchlater);
 var noNewplayer = isWatchlater;
 
+var userFontSize = 0.6;
+var newplayerFontSize = 0.8;
+var ratio = userFontSize / newplayerFontSize;
+
+function changeFontSize(element) {
+	var ori = element.style.fontSize.replace('px', '');
+	element.style.fontSize = ori * ratio + 'px';
+}
+
 if(isNew && !noNewplayer) {
     // 新版
-    var set = JSON.parse(localStorage.bilibili_player_settings);
-    log('fontsize', set.setting_config.fontsize);
-    var fontsize = set.setting_config.fontsize;
-    setDanmuFontsize(0.6);
-    // isBigscreen() ? setDanmuFontsize(0.8) : setDanmuFontsize(0.6);
+    /// 自定义字号
+    log('fontsize', getDanmuFontsize());
 
-    // header, 播放器上方margin, 弹幕设置, 标题, 操作, up
-    var eleHeight = [50, 20, 46, 49.1+16, 28+12, 40+16];
-    var eleShow =   [1,  1,  1,  1,       1,       0];
-    var eleTotHeight = 0;
-    for(let i=0; i<eleShow.length; i++) {
-        eleTotHeight += eleHeight[i] * eleShow[i];
+    if(JSON.parse(localStorage.bilibili_player_settings).setting_config.type === 'div') {
+        // 仅在css3渲染弹幕时能够自定义字号
+        log('自定义字号:', userFontSize);
+        setDanmuFontsize(newplayerFontSize);
+        dmbox = document.querySelector('.bilibili-player-video-danmaku');
+        observer = new MutationObserver(function(mutationsList) {
+            console.log(dmbox.innerText, mutationsList.length, mutationsList);
+            for(let mutation of mutationsList) {
+                // if(mutation.addedNodes.length > 1 || mutation.removedNodes.length > 1) {
+                // 	console.log(mutation);
+                // }
+    
+                if(mutation.target.className === 'bilibili-danmaku' && mutation.addedNodes.length > 0) {
+                    // 修改已有弹幕div的inner text
+                    changeFontSize(mutation.target);
+                } else {
+                    for(let dm of mutation.addedNodes) {
+                        // log(dm.innerText);
+                        changeFontSize(dm);
+                    }
+                }
+            }
+        })
+        observer.observe(dmbox, {childList: true, subtree: true});
     }
-    eleTotHeight = isBigscreen()? 230.1 : 221.1;
 
+    /// 扩大新版播放器，滚动旧版播放器到适合观看的位置
     if(isNormal) {
         window.setSize = function() {
             var isWide = window.isWide
@@ -97,7 +125,6 @@ if(isNew && !noNewplayer) {
 
         // 0.24.2 调整元素顺序
         function rearrange() {
-            log('rearrange');
             $('.v-wrap').css('margin-top', '10px');
 
             let title = $('#viewbox_report');
@@ -192,8 +219,8 @@ if(isNew && !noNewplayer) {
     }
 
 } else {
-    log('old player, scroll only');
-    setDanmuFontsize(0.7);
+    log('旧播放器，仅滚动');
+    setDanmuFontsize(userFontSize);
     if(isBangumi) {
         scrollTo(0, 400);
     } else if(isWatchlater) {
@@ -204,3 +231,12 @@ if(isNew && !noNewplayer) {
         scrollTo(0, 423);
     }
 }
+
+// header, 播放器上方margin, 弹幕设置, 标题, 操作, up
+// var eleHeight = [50, 20, 46, 49.1+16, 28+12, 40+16];
+// var eleShow =   [1,  1,  1,  1,       1,       0];
+// var eleTotHeight = 0;
+// for(let i=0; i<eleShow.length; i++) {
+//     eleTotHeight += eleHeight[i] * eleShow[i];
+// }
+// eleTotHeight = isBigscreen()? 230.1 : 221.1;
