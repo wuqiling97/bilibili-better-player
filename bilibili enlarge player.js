@@ -83,7 +83,9 @@ function isSizeCorrect(element) {
                 }
             }
         }
-        $c('.bilibili-player-iconfont.bilibili-player-iconfont-start').click();
+        // 判断是否暂停，并暂停视频
+        if(!$c('.bilibili-player-area').className.includes('video-state-pause'))
+            $c('.bilibili-player-iconfont.bilibili-player-iconfont-start').click();
         return false;
     }
     return true;
@@ -129,13 +131,24 @@ function fontSizeMain() {
 }
 
 function listenVideoPartChange() {
-    video = document.querySelector('.bilibili-player-video');
+    video = document.querySelector('.bilibili-player-video-bottom-area');
     observer = new MutationObserver(function(mutationsList) {
+        console.log('wrap', mutationsList);
         log('视频P改变');
         setTimeout(fontSizeMain, 0);
         setTimeout(listenVideoPartChange, 0);
+        return;
+        for(let mutation of mutationsList) {
+            for(let node of mutation.removedNodes) {
+                if(node.className === 'bilibili-player-video-danmaku') {
+                }
+            }
+        }
     });
-    observer.observe(video, {childList: true});
+    observer.observe(video, {
+        childList: true, 
+        // subtree: true
+    });
 }
 // 字号函数end
 
