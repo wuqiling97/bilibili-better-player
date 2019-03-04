@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.4.0
+// @version      0.4.1
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -11,6 +11,8 @@
 // @require      https://static.hdslb.com/js/jquery.min.js
 // ==/UserScript==
 'use strict'
+
+$c = document.querySelector.bind(document);
 
 Math.clamp = function(val, l, h) {
     (val < l) && (val = l);
@@ -35,6 +37,10 @@ function getDanmuFontsize() {
 function isint(n) {
     return parseFloat(n.toFixed(5)) === Math.round(n);
 }
+function isclose(a, b) {
+    var min = Math.min(a, b);
+    return Math.abs(a-b) < min * 1e-7;
+}
 
 function isBigscreen() {
     return screen.width > 1500;
@@ -51,9 +57,40 @@ var userFontSize = 0.6;
 var newplayerFontSize = 0.8;
 var ratio = userFontSize / newplayerFontSize;
 
+var correctSize = [18, 25, 36].map(x => userFontSize*x);
+var gmutationsList = [];
+function isSizeCorrect(element) {
+    var ori = parseFloat(element.style.fontSize.replace('px', ''));
+    if(!correctSize.map(x => isclose(x, ori)).reduce((x, y) => x||y)) {
+        log('字号错误!', ori+'px', element)
+        console.log(gmutationsList);
+        for(let list of gmutationsList) {
+            console.log('mutation:')
+            for(let mu of list) {
+                if(mu.target.className === 'bilibili-danmaku') {
+                    if(mu.addedNodes.length > 0) {
+                        console.log('ADD', mu.addedNodes[0], mu);
+                    } else {
+                        console.log('RM', mu.removedNodes[0], mu);
+                    }
+                } else {
+                    if(mu.addedNodes.length > 0) {
+                        console.log('ADD', mu.addedNodes[0], mu);
+                    } else {
+                        console.log('RM', mu.removedNodes[0], mu);
+                    }
+                }
+            }
+        }
+        $c('.bilibili-player-iconfont.bilibili-player-iconfont-start').click();
+        return false;
+    }
+    return true;
+}
 function changeFontSize(element) {
-	var ori = element.style.fontSize.replace('px', '');
-	element.style.fontSize = ori * ratio + 'px';
+    var ori = parseFloat(element.style.fontSize.replace('px', ''));
+    element.style.fontSize = ori * ratio + 'px';
+    isSizeCorrect(element);
 }
 
 if(isNew && !noNewplayer) {
@@ -66,20 +103,26 @@ if(isNew && !noNewplayer) {
         log('自定义字号:', userFontSize);
         setDanmuFontsize(newplayerFontSize);
         dmbox = document.querySelector('.bilibili-player-video-danmaku');
+
         observer = new MutationObserver(function(mutationsList) {
-            console.log(dmbox.innerText, mutationsList.length, mutationsList);
+            gmutationsList.push(mutationsList);
+            if(gmutationsList.length > 3) {
+                gmutationsList.shift();
+            }
+            var changedEle = [];
             for(let mutation of mutationsList) {
-                // if(mutation.addedNodes.length > 1 || mutation.removedNodes.length > 1) {
-                // 	console.log(mutation);
-                // }
-    
-                if(mutation.target.className === 'bilibili-danmaku' && mutation.addedNodes.length > 0) {
-                    // 修改已有弹幕div的inner text
-                    changeFontSize(mutation.target);
-                } else {
-                    for(let dm of mutation.addedNodes) {
-                        // log(dm.innerText);
-                        changeFontSize(dm);
+                if(mutation.addedNodes.length > 0) {
+                    if(mutation.target.className === 'bilibili-danmaku') {
+                        // 修改已有弹幕div的inner text
+                        if(!changedEle.includes(mutation.target)) {
+                            changeFontSize(mutation.target);
+                            changedEle.push(mutation.target);
+                        }
+                    } else {
+                        for(let dm of mutation.addedNodes) {
+                            changeFontSize(dm);
+                            changedEle.push(dm);
+                        }
                     }
                 }
             }
