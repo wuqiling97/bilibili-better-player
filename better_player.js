@@ -113,6 +113,7 @@ function fontSizeMain() {
         // 仅在css3渲染弹幕时能够自定义字号
         log('自定义字号:', userFontSize);
         setDanmuFontsize(newplayerFontSize);
+        log('in fontsizemain, fontsize', getDanmuFontsize());
 
         // 监控弹幕div的child变化，并修改fontsize
         mainObserver = new MutationObserver(function(mutationsList) {
@@ -221,7 +222,7 @@ if(isNew && !noNewplayer) {
             () => $c('span.like').innerText !== '--',
             rearrange, 500
         );
-        
+
     } else if(isBangumi) {
         window.setSize = function() {
             var maxW = md.specialCover ? 1070 : 1280
