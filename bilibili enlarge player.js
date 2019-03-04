@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.4.1
+// @version      0.4.2
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -46,13 +46,14 @@ function isBigscreen() {
     return screen.width > 1500;
 }
 
-var isNew = document.querySelector('.has-stardust');
+var isNew = !!document.querySelector('.has-stardust');
 // location: url相关
 var isBangumi = location.pathname.indexOf('bangumi') !== -1;
 var isWatchlater = location.pathname.indexOf('watchlater') !== -1;
 var isNormal = !(isBangumi || isWatchlater);
 var noNewplayer = isWatchlater;
 
+// 字号函数
 var userFontSize = 0.6;
 var newplayerFontSize = 0.8;
 var ratio = userFontSize / newplayerFontSize;
@@ -92,18 +93,14 @@ function changeFontSize(element) {
     element.style.fontSize = ori * ratio + 'px';
     isSizeCorrect(element);
 }
-
-if(isNew && !noNewplayer) {
-    // 新版
-    /// 自定义字号
-    log('fontsize', getDanmuFontsize());
-
+function fontSizeMain() {
     if(JSON.parse(localStorage.bilibili_player_settings).setting_config.type === 'div') {
         // 仅在css3渲染弹幕时能够自定义字号
         log('自定义字号:', userFontSize);
         setDanmuFontsize(newplayerFontSize);
         dmbox = document.querySelector('.bilibili-player-video-danmaku');
 
+        // 监控弹幕div的child变化，并修改fontsize
         observer = new MutationObserver(function(mutationsList) {
             gmutationsList.push(mutationsList);
             if(gmutationsList.length > 3) {
@@ -129,6 +126,25 @@ if(isNew && !noNewplayer) {
         })
         observer.observe(dmbox, {childList: true, subtree: true});
     }
+}
+
+function listenVideoPartChange() {
+    video = document.querySelector('.bilibili-player-video');
+    observer = new MutationObserver(function(mutationsList) {
+        log('视频P改变');
+        setTimeout(fontSizeMain, 0);
+        setTimeout(listenVideoPartChange, 0);
+    });
+    observer.observe(video, {childList: true});
+}
+// 字号函数end
+
+if(isNew && !noNewplayer) {
+    // 新版
+    /// 自定义字号
+    log('fontsize', getDanmuFontsize());
+    fontSizeMain();
+    listenVideoPartChange();
 
     /// 扩大新版播放器，滚动旧版播放器到适合观看的位置
     if(isNormal) {
