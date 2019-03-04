@@ -12,7 +12,8 @@
 // ==/UserScript==
 'use strict'
 
-$c = document.querySelector.bind(document);
+var $c = document.querySelector.bind(document);
+window.$c = $c;
 
 Math.clamp = function(val, l, h) {
     (val < l) && (val = l);
@@ -46,7 +47,7 @@ function isBigscreen() {
     return screen.width > 1500;
 }
 
-var isNew = !!document.querySelector('.has-stardust');
+var isNew = !!$c('.has-stardust');
 // location: url相关
 var isBangumi = location.pathname.indexOf('bangumi') !== -1;
 var isWatchlater = location.pathname.indexOf('watchlater') !== -1;
@@ -95,15 +96,17 @@ function changeFontSize(element) {
     element.style.fontSize = ori * ratio + 'px';
     isSizeCorrect(element);
 }
+
+var mainObserver = null;
+
 function fontSizeMain() {
     if(JSON.parse(localStorage.bilibili_player_settings).setting_config.type === 'div') {
         // 仅在css3渲染弹幕时能够自定义字号
         log('自定义字号:', userFontSize);
         setDanmuFontsize(newplayerFontSize);
-        dmbox = document.querySelector('.bilibili-player-video-danmaku');
 
         // 监控弹幕div的child变化，并修改fontsize
-        observer = new MutationObserver(function(mutationsList) {
+        mainObserver = new MutationObserver(function(mutationsList) {
             gmutationsList.push(mutationsList);
             if(gmutationsList.length > 3) {
                 gmutationsList.shift();
@@ -126,26 +129,24 @@ function fontSizeMain() {
                 }
             }
         })
-        observer.observe(dmbox, {childList: true, subtree: true});
+        mainObserver.observe($c('.bilibili-player-video-danmaku'), {
+            childList: true, subtree: true});
     }
 }
 
 function listenVideoPartChange() {
-    video = document.querySelector('.bilibili-player-video-bottom-area');
-    observer = new MutationObserver(function(mutationsList) {
-        console.log('wrap', mutationsList);
+    var observer = new MutationObserver(function(mutationsList) {
+        console.log('part', mutationsList);
         log('视频P改变');
-        setTimeout(fontSizeMain, 0);
+
+        // 切换清晰度时也会触发事件，故disconnect之前的监听
+        mainObserver.disconnect();
+        mainObserver.observe($c('.bilibili-player-video-danmaku'), {
+            childList: true, subtree: true});
         setTimeout(listenVideoPartChange, 0);
-        return;
-        for(let mutation of mutationsList) {
-            for(let node of mutation.removedNodes) {
-                if(node.className === 'bilibili-player-video-danmaku') {
-                }
-            }
-        }
+        observer.disconnect();
     });
-    observer.observe(video, {
+    observer.observe($c('.bilibili-player-video'), {
         childList: true, 
         // subtree: true
     });
@@ -173,11 +174,11 @@ if(isNew && !noNewplayer) {
             var w = videoW + rcon_w
                 , h = Math.round((videoW + (isWide ? rcon_w : 0)) * (9 / 16)) + 46
                 , pad = "0 " + (width < w + 152 ? 76 : 0) // margin至少76
-                , u = document.querySelector(".stardust-video .bili-wrapper")
-                , vwrap = document.querySelector(".v-wrap")
-                , bofqi = document.querySelector("#bofqi")
-                , dmbox = document.querySelector("#danmukuBox")
-                , pwrap = document.querySelector("#playerWrap");
+                , u = $c(".stardust-video .bili-wrapper")
+                , vwrap = $c(".v-wrap")
+                , bofqi = $c("#bofqi")
+                , dmbox = $c("#danmukuBox")
+                , pwrap = $c("#playerWrap");
             u && (u.style.width = w + "px", u.style.padding = pad + "px");
             vwrap && (vwrap.style.width = w + "px", vwrap.style.padding = pad + "px");
             bofqi && (bofqi.style.width = w - (isWide ? 0 : rcon_w) + "px", bofqi.style.height = h + "px");
@@ -190,8 +191,8 @@ if(isNew && !noNewplayer) {
                 pwrap && (pwrap.style.height = "auto"),
                 bofqi && (bofqi.style.position = "static")
             );
-            document.querySelector('.l-con').style.width = 'auto';
-            document.querySelector('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
+            $c('.l-con').style.width = 'auto';
+            $c('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
         } // setSize
         setSize();
 
@@ -207,7 +208,7 @@ if(isNew && !noNewplayer) {
 
         // 等待页面加载完毕再rearrange
         function wrap() {
-            if(document.querySelector('span.like').innerText === '--') {
+            if($c('span.like').innerText === '--') {
                 setTimeout(wrap, 500);
                 return;
             }
