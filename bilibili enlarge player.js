@@ -141,17 +141,6 @@ function fontSizeMain() {
         })
         mainObserver.observe($c('.bilibili-player-video-danmaku'), {
             childList: true, subtree: true});
-        // function wait2observe() {
-        //     var dmbox = $c('.bilibili-player-video-danmaku');
-        //     if(!dmbox) {
-        //         setTimeout(wait2observe, 250);
-        //         return;
-        //     }
-        //     mainObserver.observe($c('.bilibili-player-video-danmaku'), {
-        //         childList: true, subtree: true});
-            
-        // }
-        // wait2observe();
     }
 }
 
@@ -167,10 +156,7 @@ function listenVideoPartChange() {
         observer.disconnect();
     });
     
-    observer.observe($c('.bilibili-player-video'), {
-        childList: true, 
-        // subtree: true
-    });
+    observer.observe($c('.bilibili-player-video'), {childList: true});
 }
 // 字号函数end
 
@@ -235,15 +221,7 @@ if(isNew && !noNewplayer) {
             () => $c('span.like').innerText !== '--',
             rearrange, 500
         );
-        // function wrap() {
-        //     if($c('span.like').innerText === '--') {
-        //         setTimeout(wrap, 500);
-        //         return;
-        //     }
-        //     rearrange();
-        // }
-
-        // wrap();
+        
     } else if(isBangumi) {
         window.setSize = function() {
             var maxW = md.specialCover ? 1070 : 1280
