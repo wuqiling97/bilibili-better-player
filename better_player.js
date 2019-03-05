@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.4.3
+// @version      0.4.4
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -67,16 +67,18 @@ var noNewplayer = isWatchlater;
 
 // 字号函数
 var userFontSize = 0.7;
-var newplayerFontSize = 0.8;
-var ratio = userFontSize / newplayerFontSize;
+var playerFontSizeList = [0.6, 0.8, 1, 1.3, 1.6]; // 新播放器可选字体
+var playerFontSize = playerFontSizeList.filter(x => x>userFontSize)[0];
+var ratio = userFontSize / playerFontSize;
 
 var correctSize = [18, 25, 36].map(x => userFontSize*x);
 var gmutationsList = [];
 // 检查元素字号是否正确
+var haspaused = false;
 function isSizeCorrect(element) {
     var ori = parseFloat(element.style.fontSize.replace('px', ''));
     if(!correctSize.map(x => isclose(x, ori)).reduce((x, y) => x||y)) {
-        log('字号错误!', ori+'px', element)
+        console.error('字号错误!', ori+'px', element)
         console.log(gmutationsList);
         for(let list of gmutationsList) {
             console.log('mutation:')
@@ -97,8 +99,10 @@ function isSizeCorrect(element) {
             }
         }
         // 判断是否暂停，并暂停视频
-        if(!$c('.bilibili-player-area').className.includes('video-state-pause'))
+        if(!haspaused && !$c('.bilibili-player-area').className.includes('video-state-pause')) {
             $c('.bilibili-player-iconfont.bilibili-player-iconfont-start').click();
+            haspaused = true;
+        }
         return false;
     }
     return true;
@@ -114,9 +118,7 @@ var mainObserver = null;
 function fontSizeMain() {
     if(JSON.parse(localStorage.bilibili_player_settings).setting_config.type === 'div') {
         // 仅在css3渲染弹幕时能够自定义字号
-        log('自定义字号:', userFontSize);
-        setDanmuFontsize(newplayerFontSize);
-        log('in fontsizemain, fontsize', getDanmuFontsize());
+        log('自定义字号:', userFontSize, '播放器字号:', playerFontSize);
 
         // 监控弹幕div的child变化，并修改fontsize
         mainObserver = new MutationObserver(function(mutationsList) {
@@ -275,6 +277,7 @@ if(isNew && !noNewplayer) {
     // 新版
     /// 自定义字号
     log('origin fontsize', getDanmuFontsize());
+    setDanmuFontsize(playerFontSize);
     conditionExec(
         () => $c('.bilibili-player-video-danmaku') && $c('.bilibili-player-video'),
         () => {fontSizeMain(); listenVideoPartChange();},
