@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.4.5
+// @version      0.4.6
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -161,28 +161,39 @@ function listenVideoPartChange() {
         setTimeout(listenVideoPartChange, 0);
         observer.disconnect();
     });
-    
+
     observer.observe($c('.bilibili-player-video'), {childList: true});
 }
 // 字号函数end
 
+// 页面px常量
+var px = {
+    rconW: 350, // 右侧栏+左右栏margin 320+30
+    appMinPad: 76, // 左右最小padding
+    dmBarH: 46, // 弹幕条高度
+    blackSide2H: 96,
+    blackSide2W: 14
+};
+
+function getHeightConstrain(pageH) {
+    var h = window.isWide ? (.743 * pageH - 108.7) : 0.68 * pageH
+    return Math.round(h * 16/9)
+}
 
 function setSizeNormal() {
     var isWide = window.isWide
-        , rcon_w = 350 // 右侧栏+左右栏margin 320+30
         , pageH = $(window).height()
         , pageW = $(window).width()
-        , thh = Math.round(16 * (pageH*0.68) / 9) // 用height限制宽度
-        , thw = pageW - 152 - rcon_w // 用width限制，实为margin+iswide限制
+        , thh = getHeightConstrain(pageH) // 用height限制宽度
+        , thw = pageW - 2*px.appMinPad - px.rconW // 用width限制，实为margin+iswide限制
         , videoW = Math.min(thw, thh); // 非宽屏下的宽度
     videoW = Math.clamp(videoW, 638, 1280);
-    var w = videoW + rcon_w
+    var w = videoW + px.rconW
     // 视频+弹幕条的高度, 加window.可防止reference error
-    var h = window.hasBlackSide && !isWide ? 
-        Math.round((videoW - 14 + (isWide ? rcon_w : 0)) * (9 / 16)) + 96 : 
-        Math.round((videoW + (isWide ? rcon_w : 0)) * (9 / 16))
-    h += 46;
-    var pad = "0 " + (pageW < w + 152 ? 76 : 0) // margin至少76
+    var h = px.dmBarH + (window.hasBlackSide && !isWide ?
+        Math.round((videoW - px.blackSide2W + (isWide ? px.rconW : 0)) * (9 / 16)) + px.blackSide2H :
+        Math.round((videoW + (isWide ? px.rconW : 0)) * (9 / 16)))
+    var pad = "0 " + (pageW < w + 2*px.appMinPad ? px.appMinPad : 0) // margin至少76
     var u = $c(".stardust-video .bili-wrapper")
         , vwrap = $c(".v-wrap")
         , bofqi = $c("#bofqi")
@@ -190,7 +201,7 @@ function setSizeNormal() {
         , pwrap = $c("#playerWrap");
     u && (u.style.width = w + "px", u.style.padding = pad + "px");
     vwrap && (vwrap.style.width = w + "px", vwrap.style.padding = pad + "px");
-    bofqi && (bofqi.style.width = w - (isWide ? 0 : rcon_w) + "px", bofqi.style.height = h + "px");
+    bofqi && (bofqi.style.width = videoW + (isWide ? px.rconW : 0) + "px", bofqi.style.height = h + "px");
     isWide ? (
         dmbox && (dmbox.style.height = h - 0 + "px"),
         pwrap && (pwrap.style.height = h - 0 + "px"),
@@ -202,21 +213,22 @@ function setSizeNormal() {
     );
     $c('.l-con').style.width = 'auto';
     // $c('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
+    // isWide && scrollTo(0, 55) // 滚动到合适位置
 }
 
 function setSizeBangumi() {
     // 有special cover: 你的名字 www.bilibili.com/bangumi/play/ss12176
     var maxW = md.specialCover ? 1070 : 1280
     , rcon_w = 350
-    , height = $(window).height()
-    , width = $(window).width()
-    , thh = Math.round(md.specialCover ? 16 * (height - 264) / 9 - rcon_w : 16 * (0.68 * height) / 9)
-    , thw = width - 152 - rcon_w
-    , videoW = thw < thh ? thw : thh;
-    videoW < 638 && (videoW = 638),
-    maxW < videoW && (videoW = maxW);
+    , pageH = $(window).height()
+    , pageW = $(window).width()
+    , thh = md.specialCover ? Math.round((pageH - 264) * 16 / 9 - rcon_w) : getHeightConstrain(pageH)
+    , thw = pageW - 152 - rcon_w
+    , videoW = Math.min(thw, thh);
+    videoW = Math.clamp(videoW, 638, maxW);
     var appWidth = videoW + rcon_w
-    , overflow = width < appWidth + 152;
+    , overflow = pageW < appWidth + 152;
+    var isWide = window.isWide;
 
     $(".main-container").css({
         width: overflow ? appWidth + 76 : appWidth,
@@ -225,54 +237,48 @@ function setSizeBangumi() {
         marginRight: overflow ? "0" : ""
     })
     if (md.specialCover) {
-        var _ = Math.round(9 * appWidth / 16 + 46);
+        var h = Math.round(9 * appWidth / 16 + 46);
         $("#player_module").css({
-            height: _,
+            height: h,
             width: appWidth,
             paddingLeft: "",
             left: overflow ? 76 : "",
             transform: overflow ? "none" : "",
             webkitTransform: overflow ? "none" : ""
         }),
-        $(".special-cover").css({
-            height: _ + 218
-        }),
-        $(".plp-l").css({
-            paddingTop: _ + 24
-        }),
-        $(".plp-r").css({
-            marginTop: _ + 40
-        }),
-        $("#danmukuBox").css({
-            top: -(_ + 40)
-        })
+        $(".special-cover").css({height: h + 218}),
+        $(".plp-l").css({paddingTop: h + 24}),
+        $(".plp-r").css({marginTop: h + 40}),
+        $("#danmukuBox").css({top: -(h + 40)})
     } else {
-        var p = Math.round(9/16 * (videoW + (window.isWide ? rcon_w : 0))) + 46 + (window.hasBlackSide && !window.isWide ? 96 : 0);
-        $("#danmukuBox").css({
-            top: ""
-        }),
-        window.isWide ? ($("#player_module").css({
-            height: p - 0,
-            width: "",
-            paddingLeft: overflow ? 76 : "",
-            left: "",
-            transform: "",
-            webkitTransform: ""
-        }),
-        $(".plp-l").css({
-            paddingTop: p - 0
-        }),
-        $(".plp-r").css({
-            marginTop: p + 16
-        })) : ($("#player_module").css({
-            height: p - 0,
-            width: "",
-            paddingLeft: "",
-            left: "",
-            transform: "",
-            webkitTransform: ""
-        }),
-        $(".plp-l, .plp-r").removeAttr("style"))
+        var h = 46 + (window.hasBlackSide && !isWide ?
+            Math.round((videoW - 14 + (isWide ? rcon_w : 0)) * (9 / 16)) + 96 :
+            Math.round((videoW + (isWide ? rcon_w : 0)) * (9 / 16)))
+        $("#danmukuBox").css({top: ""});
+        if(window.isWide) {
+            $("#player_module").css({
+                height: h,
+                width: "",
+                paddingLeft: overflow ? 76 : "",
+                left: "",
+                transform: "",
+                webkitTransform: ""
+            });
+            $(".plp-l").css({paddingTop: h - 0})
+            $(".plp-r").css({marginTop: h + 16})
+            // scrollTo(0, 55)
+        } else {
+            $("#player_module").css({
+                height: h - 0,
+                width: "",
+                paddingLeft: "",
+                left: "",
+                transform: "",
+                webkitTransform: ""
+            })
+            $(".plp-l, .plp-r").removeAttr("style")
+            // scrollTo(0, 0)
+        }
     }
 }
 
@@ -303,7 +309,7 @@ if(isNew && !noNewplayer) {
             title.css('margin-top', '8px');
             title.insertAfter('#playerWrap');
         }
-        
+
         // 等待页面加载完毕再rearrange
         conditionExec(
             () => $c('span.like').innerText !== '--',
@@ -311,7 +317,9 @@ if(isNew && !noNewplayer) {
         );
 
     } else if(isBangumi) {
+        $(window).off('resize.stardust');
         window.setSize = setSizeBangumi; // setSize
+        $(window).on('resize.stardust', setSize);
         setSize();
         if(!md.specialCover) {
             $('#app').css('margin-top', '10px');
