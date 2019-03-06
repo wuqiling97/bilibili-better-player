@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.4.4
+// @version      0.4.5
 // @description  解决B站新版播放器太小的问题
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -170,16 +170,20 @@ function listenVideoPartChange() {
 function setSizeNormal() {
     var isWide = window.isWide
         , rcon_w = 350 // 右侧栏+左右栏margin 320+30
-        , height = $(window).height()
-        , width = $(window).width()
-        , thh = Math.round(16 * (height*0.68) / 9) // 用height限制宽度
-        , thw = width - 152 - rcon_w // 用width限制，实为margin+iswide限制
-        , videoW = Math.min(thw, thh);
+        , pageH = $(window).height()
+        , pageW = $(window).width()
+        , thh = Math.round(16 * (pageH*0.68) / 9) // 用height限制宽度
+        , thw = pageW - 152 - rcon_w // 用width限制，实为margin+iswide限制
+        , videoW = Math.min(thw, thh); // 非宽屏下的宽度
     videoW = Math.clamp(videoW, 638, 1280);
     var w = videoW + rcon_w
-        , h = Math.round((videoW + (isWide ? rcon_w : 0)) * (9 / 16)) + 46
-        , pad = "0 " + (width < w + 152 ? 76 : 0) // margin至少76
-        , u = $c(".stardust-video .bili-wrapper")
+    // 视频+弹幕条的高度, 加window.可防止reference error
+    var h = window.hasBlackSide && !isWide ? 
+        Math.round((videoW - 14 + (isWide ? rcon_w : 0)) * (9 / 16)) + 96 : 
+        Math.round((videoW + (isWide ? rcon_w : 0)) * (9 / 16))
+    h += 46;
+    var pad = "0 " + (pageW < w + 152 ? 76 : 0) // margin至少76
+    var u = $c(".stardust-video .bili-wrapper")
         , vwrap = $c(".v-wrap")
         , bofqi = $c("#bofqi")
         , dmbox = $c("#danmukuBox")
@@ -197,10 +201,11 @@ function setSizeNormal() {
         bofqi && (bofqi.style.position = "static")
     );
     $c('.l-con').style.width = 'auto';
-    $c('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
+    // $c('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
 }
 
 function setSizeBangumi() {
+    // 有special cover: 你的名字 www.bilibili.com/bangumi/play/ss12176
     var maxW = md.specialCover ? 1070 : 1280
     , rcon_w = 350
     , height = $(window).height()
@@ -308,7 +313,12 @@ if(isNew && !noNewplayer) {
     } else if(isBangumi) {
         window.setSize = setSizeBangumi; // setSize
         setSize();
-        $('#app').css('margin-top', '10px');
+        if(!md.specialCover) {
+            $('#app').css('margin-top', '10px');
+        } else {
+            let scrollY = parseFloat($('#app').css('margin-top').replace('px', '')) + 50 - 24;
+            scrollTo(0, scrollY);
+        }
     }
 
 } else {
