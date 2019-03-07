@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.4.6
-// @description  解决B站新版播放器太小的问题
+// @version      0.5.0
+// @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        *://www.bilibili.com/video/av*
 // @match        *://www.bilibili.com/watchlater/*
@@ -342,6 +342,47 @@ if(isNew && !noNewplayer) {
         scrollTo(0, 423);
     }
 }
+
+// 弹幕屏蔽规则全部启用/禁用，全部同步开关
+var ON = '启用', OFF = '关闭';
+function toggleRuleState() {
+    var rules = $('span.player-auxiliary-block-line-state')
+    var on = 0, off = 0;
+    rules.each((idx, ele) => {
+        switch(ele.innerText) {
+            case OFF: off += 1; break;
+            case ON: on += 1; break;
+            default:
+        }
+    })
+    // console.log('on, off = ', on, off)
+
+    function shouldClick(ele) {
+        if(ele.innerText === ON && on >= off || 
+            ele.innerText === OFF && on < off) {
+            ele.click()
+        }
+    }
+
+    rules.each((idx, ele) => {shouldClick(ele)})
+}
+
+function syncAllRules() {
+    $('span.player-auxiliary-block-line-sync.bp-icon.icon-player-sync').click()
+}
+
+conditionExec(
+    () => $c('div.player-auxiliary-block-list-function-state') && $c('div.player-auxiliary-block-list-function-sync'),
+    () => {
+        var css = {color: '#00a1d6', cursor: 'pointer'}
+        var dmstate = $('div.player-auxiliary-block-list-function-state')
+        var dmsync = $('div.player-auxiliary-block-list-function-sync')
+        dmstate.on('click', toggleRuleState)
+        dmstate.css(css)
+        dmsync.on('click', syncAllRules)
+        dmsync.css(css)
+    }, 700
+)
 
 // header, 播放器上方margin, 弹幕设置, 标题, 操作, up
 // var eleHeight = [50, 20, 46, 49.1+16, 28+12, 40+16];
