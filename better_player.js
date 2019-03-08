@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.5.0
+// @version      0.5.1
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -367,20 +367,23 @@ function toggleRuleState() {
     rules.each((idx, ele) => {shouldClick(ele)})
 }
 
-function syncAllRules() {
-    $('span.player-auxiliary-block-line-sync.bp-icon.icon-player-sync').click()
-}
-
 conditionExec(
     () => $c('div.player-auxiliary-block-list-function-state') && $c('div.player-auxiliary-block-list-function-sync'),
     () => {
         var css = {color: '#00a1d6', cursor: 'pointer'}
         var dmstate = $('div.player-auxiliary-block-list-function-state')
         var dmsync = $('div.player-auxiliary-block-list-function-sync')
+        var dmdel = $('div.player-auxiliary-block-list-function-delete')
         dmstate.on('click', toggleRuleState)
         dmstate.css(css)
-        dmsync.on('click', syncAllRules)
+        dmsync.on('click', () => {
+            $('span.player-auxiliary-block-line-sync.bp-icon.icon-player-sync').click()
+        })
         dmsync.css(css)
+        dmdel.on('click', () => {
+            $('span.player-auxiliary-block-line-delete.bp-icon.icon-general-del').click();
+        })
+        dmdel.css(css)
     }, 700
 )
 
