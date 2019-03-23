@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.5.1
+// @version      0.6.0
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -11,6 +11,13 @@
 // @require      https://static.hdslb.com/js/jquery.min.js
 // ==/UserScript==
 'use strict'
+
+// 用户可设置的变量
+var userFontSize = 0.7;
+function getHeightConstrain(pageH) {
+    var h = window.isWide ? (.743 * pageH - 108.7) : 0.68 * pageH
+    return Math.round(h * 16/9)
+}
 
 var $c = document.querySelector.bind(document);
 window.$c = $c;
@@ -66,7 +73,6 @@ var noNewplayer = isWatchlater;
 
 
 // 字号函数
-var userFontSize = 0.7;
 var playerFontSizeList = [0.6, 0.8, 1, 1.3, 1.6]; // 新播放器可选字体
 var playerFontSize = playerFontSizeList.filter(x => x>userFontSize)[0];
 var ratio = userFontSize / playerFontSize;
@@ -111,6 +117,11 @@ function changeFontSize(element) {
     var ori = parseFloat(element.style.fontSize.replace('px', ''));
     element.style.fontSize = ori * ratio + 'px';
     isSizeCorrect(element);
+    // if(element.style.visibility === 'hidden') {
+    //     element.style.visibility = 'collapse'
+    //     element.style.display = 'none'
+    // }
+    // element.remove()
 }
 
 var mainObserver = null;
@@ -174,11 +185,6 @@ var px = {
     blackSide2H: 96,
     blackSide2W: 14
 };
-
-function getHeightConstrain(pageH) {
-    var h = window.isWide ? (.743 * pageH - 108.7) : 0.68 * pageH
-    return Math.round(h * 16/9)
-}
 
 function setSizeNormal() {
     var isWide = window.isWide
@@ -282,6 +288,36 @@ function setSizeBangumi() {
     }
 }
 
+function setSizeMini() {
+    var getcss = function() {
+        let w = 320 - 70 + parseFloat($('#app').css('margin-right').replace('px', ''))
+        return `#bofqi.stardust-player.mini-player {
+  width: ${w}px!important;
+  height: ${w*2/3}px!important;
+}`
+    }
+    var style = $("<style id='tamper' type='text/css'></style>");
+    $('body').append(style)
+
+    miniObs = new MutationObserver(function(mutationsList) {
+        // console.log(mutationsList);
+        for(let mutation of mutationsList) {
+            if(mutation.attributeName === 'class') {
+                let bofqi = $(mutation.target)
+                if(bofqi.hasClass('mini-player')) {
+                    style.text(getcss())
+                    // log('mini player', w)
+                } else {
+                    style.text('')
+                    // log('no mini')
+                }
+            }
+        }
+    })
+    miniObs.observe($c('#bofqi'), {
+        attributes: true, attributeOldValue: false, attributeFilter: ['class']
+    })
+}
 
 /// 改播放器代码
 if(isNew && !noNewplayer) {
@@ -295,6 +331,8 @@ if(isNew && !noNewplayer) {
         250
     );
 
+    // 修改mini player
+    setSizeMini()
     /// 扩大新版播放器，滚动旧版播放器到适合观看的位置
     if(isNormal) {
         window.setSize = setSizeNormal; // setSize
@@ -386,12 +424,3 @@ conditionExec(
         dmdel.css(css)
     }, 700
 )
-
-// header, 播放器上方margin, 弹幕设置, 标题, 操作, up
-// var eleHeight = [50, 20, 46, 49.1+16, 28+12, 40+16];
-// var eleShow =   [1,  1,  1,  1,       1,       0];
-// var eleTotHeight = 0;
-// for(let i=0; i<eleShow.length; i++) {
-//     eleTotHeight += eleHeight[i] * eleShow[i];
-// }
-// eleTotHeight = isBigscreen()? 230.1 : 221.1;
