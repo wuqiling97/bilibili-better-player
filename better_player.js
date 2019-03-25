@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.6.0
+// @version      0.6.1
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -289,13 +289,26 @@ function setSizeBangumi() {
 }
 
 function setSizeMini() {
-    var getcss = function() {
+    var getcss = isBangumi?
+    function() {
         let w = 320 - 70 + parseFloat($('#app').css('margin-right').replace('px', ''))
-        return `#bofqi.stardust-player.mini-player {
+        return `#bofqi.mini-player {
   width: ${w}px!important;
   height: ${w*2/3}px!important;
 }`
-    }
+    } :
+    function() {
+        let w = 320 - 70 + parseFloat($('.v-wrap').css('margin-right').replace('px', ''))
+        return `#bofqi.mini-player {
+    width: ${w}px!important;
+    height: ${w*2/3}px!important;
+}
+#bofqi.mini-player .player {
+    width: ${w}px!important;
+    height: ${w*2/3}px!important;
+}`
+    };
+
     var style = $("<style id='tamper' type='text/css'></style>");
     $('body').append(style)
 
