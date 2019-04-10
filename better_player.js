@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.6.1
+// @version      0.6.2
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -204,7 +204,8 @@ function setSizeNormal() {
         , vwrap = $c(".v-wrap")
         , bofqi = $c("#bofqi")
         , dmbox = $c("#danmukuBox")
-        , pwrap = $c("#playerWrap");
+        , pwrap = $c("#playerWrap")
+        , lcon  = $c('.l-con');
     u && (u.style.width = w + "px", u.style.padding = pad + "px");
     vwrap && (vwrap.style.width = w + "px", vwrap.style.padding = pad + "px");
     bofqi && (bofqi.style.width = videoW + (isWide ? px.rconW : 0) + "px", bofqi.style.height = h + "px");
@@ -217,7 +218,7 @@ function setSizeNormal() {
         pwrap && (pwrap.style.height = "auto"),
         bofqi && (bofqi.style.position = "static")
     );
-    $c('.l-con').style.width = 'auto';
+    lcon && (lcon.style.width = videoW + 'px');
     // $c('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
     // isWide && scrollTo(0, 55) // 滚动到合适位置
 }
