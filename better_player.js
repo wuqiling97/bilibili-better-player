@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.6.2
+// @version      0.6.3
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        *://www.bilibili.com/video/av*
@@ -293,7 +293,7 @@ function setSizeMini() {
     var getcss = isBangumi?
     function() {
         let w = 320 - 70 + parseFloat($('#app').css('margin-right').replace('px', ''))
-        return `#bofqi.mini-player {
+        return `#bofqi.stardust-player.mini-player.report-wrap-module {
   width: ${w}px!important;
   height: ${w*2/3}px!important;
 }`
@@ -410,7 +410,7 @@ function toggleRuleState() {
     // console.log('on, off = ', on, off)
 
     function shouldClick(ele) {
-        if(ele.innerText === ON && on >= off || 
+        if(ele.innerText === ON && on >= off ||
             ele.innerText === OFF && on < off) {
             ele.click()
         }
