@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.6.3
+// @version      0.7.0
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        *://www.bilibili.com/video/av*
-// @match        *://www.bilibili.com/watchlater/*
+// @match        *://www.bilibili.com/watchlater/#/av*
 // @match        *://www.bilibili.com/bangumi/play/*
 // @grant        none
 // @require      https://static.hdslb.com/js/jquery.min.js
@@ -13,22 +13,22 @@
 'use strict'
 
 // 用户可设置的变量
-var userFontSize = 0.7;
+const userFontSize = 0.7;
 function getHeightConstrain(pageH) {
     var h = window.isWide ? (.743 * pageH - 108.7) : 0.68 * pageH
     return Math.round(h * 16/9)
 }
 
-var $c = document.querySelector.bind(document);
+const $c = document.querySelector.bind(document);
 window.$c = $c;
-// 辅助函数
+//$ 辅助函数
 Math.clamp = function(val, l, h) {
     (val < l) && (val = l);
     (val > h) && (val = h);
     return val;
 };
 function isclose(a, b) {
-    var min = Math.min(a, b);
+    var min = Math.min(Math.abs(a), Math.abs(b));
     return Math.abs(a-b) < min * 1e-7;
 }
 
@@ -61,127 +61,15 @@ function conditionExec(condition, task, timeout) {
         task();
     }
 }
-// 辅助函数end
-
-var isNew = !!$c('.has-stardust');
-// var isNew = getCookie('stardustvideo') == '1';
-// location: url相关
-var isBangumi = location.pathname.indexOf('bangumi') !== -1;
-var isWatchlater = location.pathname.indexOf('watchlater') !== -1;
-var isNormal = !(isBangumi || isWatchlater);
-var noNewplayer = isWatchlater;
+//$ 辅助函数end
 
 
-// 字号函数
-var playerFontSizeList = [0.6, 0.8, 1, 1.3, 1.6]; // 新播放器可选字体
-var playerFontSize = playerFontSizeList.filter(x => x>userFontSize)[0];
-var ratio = userFontSize / playerFontSize;
-
-var correctSize = [18, 25, 36].map(x => userFontSize*x);
-var gmutationsList = [];
-// 检查元素字号是否正确
-var haspaused = false;
-function isSizeCorrect(element) {
-    var ori = parseFloat(element.style.fontSize.replace('px', ''));
-    if(!correctSize.map(x => isclose(x, ori)).reduce((x, y) => x||y)) {
-        console.error('字号错误!', ori+'px', element)
-        console.log(gmutationsList);
-        for(let list of gmutationsList) {
-            console.log('mutation:')
-            for(let mu of list) {
-                if(mu.target.className === 'bilibili-danmaku') {
-                    if(mu.addedNodes.length > 0) {
-                        console.log('ADD', mu.addedNodes[0], mu);
-                    } else {
-                        console.log('RM', mu.removedNodes[0], mu);
-                    }
-                } else {
-                    if(mu.addedNodes.length > 0) {
-                        console.log('ADD', mu.addedNodes[0], mu);
-                    } else {
-                        console.log('RM', mu.removedNodes[0], mu);
-                    }
-                }
-            }
-        }
-        // 判断是否暂停，并暂停视频
-        if(!haspaused && !$c('.bilibili-player-area').className.includes('video-state-pause')) {
-            $c('.bilibili-player-iconfont.bilibili-player-iconfont-start').click();
-            haspaused = true;
-        }
-        return false;
-    }
-    return true;
-}
-function changeFontSize(element) {
-    var ori = parseFloat(element.style.fontSize.replace('px', ''));
-    element.style.fontSize = ori * ratio + 'px';
-    isSizeCorrect(element);
-    // if(element.style.visibility === 'hidden') {
-    //     element.style.visibility = 'collapse'
-    //     element.style.display = 'none'
-    // }
-    // element.remove()
-}
-
-var mainObserver = null;
-
-function fontSizeMain() {
-    if(JSON.parse(localStorage.bilibili_player_settings).setting_config.type === 'div') {
-        // 仅在css3渲染弹幕时能够自定义字号
-        log('自定义字号:', userFontSize, '播放器字号:', playerFontSize);
-
-        // 监控弹幕div的child变化，并修改fontsize
-        mainObserver = new MutationObserver(function(mutationsList) {
-            gmutationsList.push(mutationsList);
-            if(gmutationsList.length > 3) {
-                gmutationsList.shift();
-            }
-            // 存储改过的ele防止多次修改
-            var changedEle = [];
-            for(let mutation of mutationsList) {
-                if(mutation.addedNodes.length > 0) {
-                    if(mutation.target.className === 'bilibili-danmaku') {
-                        // 修改已有弹幕div的inner text
-                        if(!changedEle.includes(mutation.target)) {
-                            changeFontSize(mutation.target);
-                            changedEle.push(mutation.target);
-                        }
-                    } else {
-                        for(let dm of mutation.addedNodes) {
-                            changeFontSize(dm);
-                            changedEle.push(dm);
-                        }
-                    }
-                }
-            }
-        })
-        mainObserver.observe($c('.bilibili-player-video-danmaku'), {
-            childList: true, subtree: true});
-    }
-}
-
-function listenVideoPartChange() {
-    var observer = new MutationObserver(function(mutationsList) {
-        log('video element改变');
-
-        // 切换清晰度时也会触发事件，故disconnect之前的监听
-        mainObserver.disconnect();
-        mainObserver.observe($c('.bilibili-player-video-danmaku'), {
-            childList: true, subtree: true});
-        setTimeout(listenVideoPartChange, 0);
-        observer.disconnect();
-    });
-
-    observer.observe($c('.bilibili-player-video'), {childList: true});
-}
-// 字号函数end
-
+//$ 设置播放器大小的3函数
 // 页面px常量
-var px = {
+const px = {
     rconW: 350, // 右侧栏+左右栏margin 320+30
     appMinPad: 76, // 左右最小padding
-    dmBarH: 46, // 弹幕条高度
+    dmBarH: 46, // 弹幕发送条高度
     blackSide2H: 96,
     blackSide2W: 14
 };
@@ -194,7 +82,7 @@ function setSizeNormal() {
         , thw = pageW - 2*px.appMinPad - px.rconW // 用width限制，实为margin+iswide限制
         , videoW = Math.min(thw, thh); // 非宽屏下的宽度
     videoW = Math.clamp(videoW, 638, 1280);
-    var w = videoW + px.rconW
+    var w = videoW + px.rconW; // 内容部分宽度
     // 视频+弹幕条的高度, 加window.可防止reference error
     var h = px.dmBarH + (window.hasBlackSide && !isWide ?
         Math.round((videoW - px.blackSide2W + (isWide ? px.rconW : 0)) * (9 / 16)) + px.blackSide2H :
@@ -224,7 +112,7 @@ function setSizeNormal() {
 }
 
 function setSizeBangumi() {
-    // 有special cover: 你的名字 www.bilibili.com/bangumi/play/ss12176
+    // 有special cover(背景图): 你的名字 www.bilibili.com/bangumi/play/ss12176
     var maxW = md.specialCover ? 1070 : 1280
     , rcon_w = 350
     , pageH = $(window).height()
@@ -333,21 +221,20 @@ function setSizeMini() {
     })
 }
 
-/// 改播放器代码
-if(isNew && !noNewplayer) {
-    // 新版
-    /// 自定义字号
-    log('origin fontsize', getDanmuFontsize());
-    setDanmuFontsize(playerFontSize);
-    conditionExec(
-        () => $c('.bilibili-player-video-danmaku') && $c('.bilibili-player-video'),
-        () => {fontSizeMain(); listenVideoPartChange();},
-        250
-    );
+//$ 完善播放器
+// location: url相关
+const isBangumi = location.pathname.indexOf('bangumi') !== -1;
+const isWatchlater = location.pathname.indexOf('watchlater') !== -1;
+const isNormal = !(isBangumi || isWatchlater);
+if(true) {
+    log('origin fontsize', getDanmuFontsize(), 'set to', userFontSize);
+    setDanmuFontsize(userFontSize);
 
     // 修改mini player
-    setSizeMini()
-    /// 扩大新版播放器，滚动旧版播放器到适合观看的位置
+    if(!isWatchlater) {
+        setSizeMini();
+    }
+    // 修改播放器大小
     if(isNormal) {
         window.setSize = setSizeNormal; // setSize
         setSize();
@@ -380,25 +267,13 @@ if(isNew && !noNewplayer) {
             scrollTo(0, scrollY);
         }
     }
-
-} else {
-    log('旧播放器，仅滚动');
-    setDanmuFontsize(userFontSize);
-    if(isBangumi) {
-        scrollTo(0, 400);
-    } else if(isWatchlater) {
-        setTimeout(() => {
-            scrollTo(0, 397);
-        }, 200);
-    } else {
-        scrollTo(0, 423);
-    }
 }
 
-// 弹幕屏蔽规则全部启用/禁用，全部同步开关
-var ON = '启用', OFF = '关闭';
+
+//$ 批量操作，弹幕屏蔽规则全部启用/禁用，全部同步开关
+const ON = '启用', OFF = '关闭';
 function toggleRuleState() {
-    var rules = $('span.player-auxiliary-block-line-state')
+    const rules = $('span.player-auxiliary-block-line-state'); //所有“启用”按钮
     var on = 0, off = 0;
     rules.each((idx, ele) => {
         switch(ele.innerText) {
@@ -408,24 +283,23 @@ function toggleRuleState() {
         }
     })
     // console.log('on, off = ', on, off)
+    const shouldon = on < off;
 
-    function shouldClick(ele) {
-        if(ele.innerText === ON && on >= off ||
-            ele.innerText === OFF && on < off) {
+    rules.each((idx, ele) => {
+        if(ele.innerText === ON && !shouldon ||
+            ele.innerText === OFF && shouldon) {
             ele.click()
         }
-    }
-
-    rules.each((idx, ele) => {shouldClick(ele)})
+    })
 }
 
 conditionExec(
     () => $c('div.player-auxiliary-block-list-function-state') && $c('div.player-auxiliary-block-list-function-sync'),
     () => {
-        var css = {color: '#00a1d6', cursor: 'pointer'}
-        var dmstate = $('div.player-auxiliary-block-list-function-state')
-        var dmsync = $('div.player-auxiliary-block-list-function-sync')
-        var dmdel = $('div.player-auxiliary-block-list-function-delete')
+        const css = {color: '#00a1d6', cursor: 'pointer'}
+        const dmstate = $('div.player-auxiliary-block-list-function-state')
+        const dmsync = $('div.player-auxiliary-block-list-function-sync')
+        const dmdel = $('div.player-auxiliary-block-list-function-delete')
         dmstate.on('click', toggleRuleState)
         dmstate.css(css)
         dmsync.on('click', () => {
