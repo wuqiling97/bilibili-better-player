@@ -1,16 +1,20 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.0
+// @version      0.7.1
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
-// @match        *://www.bilibili.com/video/av*
-// @match        *://www.bilibili.com/watchlater/#/av*
-// @match        *://www.bilibili.com/bangumi/play/*
+// @match        http*://www.bilibili.com/video/av*
+// @match        http*://www.bilibili.com/video/BV*
+// @match        http*://www.bilibili.com/watchlater/#/*
+// @match        http*://www.bilibili.com/bangumi/play/*
 // @grant        none
 // @require      https://static.hdslb.com/js/jquery.min.js
 // ==/UserScript==
 'use strict'
+
+// 问题
+// watchlater/#/* 无法匹配，但是 watchlater/* 能匹配
 
 // 用户可设置的变量
 const userFontSize = 0.7;
