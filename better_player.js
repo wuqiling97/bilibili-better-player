@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.1
+// @version      0.7.3
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
 // @match        http*://www.bilibili.com/video/BV*
+// @match        http*://www.bilibili.com/video/bv*
 // @match        http*://www.bilibili.com/watchlater/#/*
 // @match        http*://www.bilibili.com/bangumi/play/*
 // @grant        none
@@ -231,8 +232,8 @@ const isBangumi = location.pathname.indexOf('bangumi') !== -1;
 const isWatchlater = location.pathname.indexOf('watchlater') !== -1;
 const isNormal = !(isBangumi || isWatchlater);
 if(true) {
-    log('origin fontsize', getDanmuFontsize(), 'set to', userFontSize);
-    setDanmuFontsize(userFontSize);
+    log('origin fontsize', getDanmuFontsize());
+    // setDanmuFontsize(userFontSize);
 
     // 修改mini player
     if(!isWatchlater) {
@@ -255,7 +256,7 @@ if(true) {
 
         // 等待页面加载完毕再rearrange
         conditionExec(
-            () => $c('span.like').innerText !== '--',
+            () => $c('span.like').innerText !== '点赞',
             rearrange, 500
         );
 
