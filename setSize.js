@@ -177,3 +177,4 @@ function setSize() {
         $(".plp-l, .plp-r").removeAttr("style"))
     }
 }
+

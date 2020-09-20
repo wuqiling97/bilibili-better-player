@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.3
+// @version      0.7.4
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -85,26 +85,26 @@ function setSizeNormal() {
         , pageW = $(window).width()
         , thh = getHeightConstrain(pageH) // 用height限制宽度
         , thw = pageW - 2*px.appMinPad - px.rconW // 用width限制，实为margin+iswide限制
-        , videoW = Math.min(thw, thh); // 非宽屏下的宽度
+        , videoW = Math.min(thw, thh); // 视频区非宽屏下的宽度
     videoW = Math.clamp(videoW, 638, 1280);
-    var w = videoW + px.rconW; // 内容部分宽度
+    var allW = videoW + px.rconW; // 视频+右栏部分宽度
     // 视频+弹幕条的高度, 加window.可防止reference error
-    var h = px.dmBarH + (window.hasBlackSide && !isWide ?
+    var videoH = px.dmBarH + (window.hasBlackSide && !isWide ?
         Math.round((videoW - px.blackSide2W + (isWide ? px.rconW : 0)) * (9 / 16)) + px.blackSide2H :
         Math.round((videoW + (isWide ? px.rconW : 0)) * (9 / 16)))
-    var pad = "0 " + (pageW < w + 2*px.appMinPad ? px.appMinPad : 0) // margin至少76
+    var pad = "0 " + (pageW < allW + 2*px.appMinPad ? px.appMinPad : 0) // margin至少76
     var u = $c(".stardust-video .bili-wrapper")
         , vwrap = $c(".v-wrap")
         , bofqi = $c("#bofqi")
         , dmbox = $c("#danmukuBox")
         , pwrap = $c("#playerWrap")
         , lcon  = $c('.l-con');
-    u && (u.style.width = w + "px", u.style.padding = pad + "px");
-    vwrap && (vwrap.style.width = w + "px", vwrap.style.padding = pad + "px");
-    bofqi && (bofqi.style.width = videoW + (isWide ? px.rconW : 0) + "px", bofqi.style.height = h + "px");
+    u && (u.style.width = allW + "px", u.style.padding = pad + "px");
+    vwrap && (vwrap.style.width = allW + "px", vwrap.style.padding = pad + "px");
+    bofqi && (bofqi.style.width = videoW + (isWide ? px.rconW : 0) + "px", bofqi.style.height = videoH + "px");
     isWide ? (
-        dmbox && (dmbox.style.height = h - 0 + "px"),
-        pwrap && (pwrap.style.height = h - 0 + "px"),
+        dmbox && (dmbox.style.height = videoH - 0 + "px"),
+        pwrap && (pwrap.style.height = videoH - 0 + "px"),
         bofqi && (bofqi.style.position = "absolute")
     ) : (
         dmbox && (dmbox.style.height = "auto"),
@@ -250,7 +250,9 @@ if(true) {
 
             let title = $('#viewbox_report');
             let pwrap = $('#playerWrap');
-            title.css('margin-top', '8px');
+            title.css({
+                'margin': '8px 0px', 'padding': '0px', 'height': 'auto'
+            });
             title.insertAfter('#playerWrap');
         }
 
