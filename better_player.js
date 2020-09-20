@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.4
+// @version      0.7.5
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -19,10 +19,6 @@
 
 // 用户可设置的变量
 const userFontSize = 0.7;
-function getHeightConstrain(pageH) {
-    var h = window.isWide ? (.743 * pageH - 108.7) : 0.68 * pageH
-    return Math.round(h * 16/9)
-}
 
 const $c = document.querySelector.bind(document);
 window.$c = $c;
@@ -53,10 +49,6 @@ function getDanmuFontsize() {
 window.setDanmuFontsize = setDanmuFontsize;
 window.getDanmuFontsize = getDanmuFontsize;
 
-function isBigscreen() {
-    return screen.width > 1500;
-}
-
 // 对付延迟加载
 function conditionExec(condition, task, timeout) {
     if(!condition()) {
@@ -76,44 +68,55 @@ const px = {
     appMinPad: 76, // 左右最小padding
     dmBarH: 46, // 弹幕发送条高度
     blackSide2H: 96,
-    blackSide2W: 14
+    blackSide2W: 14,
+    video_margin_top: 10,
+    title_margin: 8
 };
 
+function getHeightConstrain(pageH) {
+    // 容纳标题+点赞的高度
+    var headerH = 0, header = $c('#internationalHeader');
+    if(header) {
+        headerH = header.offsetHeight;
+    }
+    var toolH = pageH - (headerH + px.video_margin_top + px.title_margin + px.dmBarH +
+        $c('#viewbox_report').offsetHeight + 16 + $c('#arc_toolbar_report').offsetHeight);
+    log(toolH, 0.68*pageH);
+    var h = window.isWide ? (.743 * pageH - 108.7) : Math.min(0.68 * pageH, toolH);
+    return Math.round(h * 16/9)
+}
+
 function setSizeNormal() {
-    var isWide = window.isWide
-        , pageH = $(window).height()
-        , pageW = $(window).width()
-        , thh = getHeightConstrain(pageH) // 用height限制宽度
-        , thw = pageW - 2*px.appMinPad - px.rconW // 用width限制，实为margin+iswide限制
-        , videoW = Math.min(thw, thh); // 视频区非宽屏下的宽度
-    videoW = Math.clamp(videoW, 638, 1280);
+    var isWide = window.isWide, pageH = window.innerHeight;
+    var pageW = window.innerWidth,
+        w1 = getHeightConstrain(pageH), // 用height限制宽度
+        w2 = pageW - 2*px.appMinPad - px.rconW, // 用width限制，实为margin+iswide限制
+        videoW = Math.min(w1, w2);
+    videoW = Math.clamp(videoW, 638, 1280); // 视频区非宽屏下的宽度
     var allW = videoW + px.rconW; // 视频+右栏部分宽度
-    // 视频+弹幕条的高度, 加window.可防止reference error
-    var videoH = px.dmBarH + (window.hasBlackSide && !isWide ?
-        Math.round((videoW - px.blackSide2W + (isWide ? px.rconW : 0)) * (9 / 16)) + px.blackSide2H :
-        Math.round((videoW + (isWide ? px.rconW : 0)) * (9 / 16)))
-    var pad = "0 " + (pageW < allW + 2*px.appMinPad ? px.appMinPad : 0) // margin至少76
-    var u = $c(".stardust-video .bili-wrapper")
-        , vwrap = $c(".v-wrap")
-        , bofqi = $c("#bofqi")
-        , dmbox = $c("#danmukuBox")
-        , pwrap = $c("#playerWrap")
-        , lcon  = $c('.l-con');
-    u && (u.style.width = allW + "px", u.style.padding = pad + "px");
-    vwrap && (vwrap.style.width = allW + "px", vwrap.style.padding = pad + "px");
-    bofqi && (bofqi.style.width = videoW + (isWide ? px.rconW : 0) + "px", bofqi.style.height = videoH + "px");
-    isWide ? (
-        dmbox && (dmbox.style.height = videoH - 0 + "px"),
-        pwrap && (pwrap.style.height = videoH - 0 + "px"),
-        bofqi && (bofqi.style.position = "absolute")
-    ) : (
-        dmbox && (dmbox.style.height = "auto"),
-        pwrap && (pwrap.style.height = "auto"),
-        bofqi && (bofqi.style.position = "static")
-    );
-    lcon && (lcon.style.width = videoW + 'px');
-    // $c('.bilibili-player-video-danmaku').style.heigth = h-46-10 + 'px';
-    // isWide && scrollTo(0, 55) // 滚动到合适位置
+    var videoH = px.dmBarH + (window.hasBlackSide && !isWide ? 
+        Math.round((videoW - px.blackSide2W + (isWide ? px.rconW : 0)) * (9 / 16)) + px.blackSide2H : 
+        Math.round((videoW + (isWide ? px.rconW : 0)) * (9 / 16)));
+    var getcss = function(selector, css) {
+        for (var pageH = selector + " {", keys = Object.keys(css), i = 0; i < keys.length; i++)
+            pageH += keys[i] + ": " + css[keys[i]] + "!important;";
+        return pageH + "}\n"
+    }
+    var a = getcss(".v-wrap", {
+        width: allW + "px",
+        padding: "0 " + (allW + 152 > pageW ? 76 : 0) + "px"
+    }) + getcss(".l-con", {
+        width: allW - px.rconW + "px"
+    }) + getcss("#bofqi", {
+        width: allW - (isWide ? 0 : px.rconW) + "px",
+        height: videoH + "px",
+        position: isWide ? "relative" : "static"
+    }) + getcss("#danmukuBox", {
+        "margin-top": isWide ? videoH + 28 + "px" : "0"
+    }) + getcss("#playerWrap", {
+        height: isWide ? videoH - 0 + "px" : "auto"
+    });
+    setSizeStyle.innerHTML = a
 }
 
 function setSizeBangumi() {
@@ -242,18 +245,19 @@ if(true) {
     // 修改播放器大小
     if(isNormal) {
         window.setSize = setSizeNormal; // setSize
-        setSize();
 
         // 0.24.2 调整元素顺序
         function rearrange() {
-            $('.v-wrap').css('margin-top', '10px');
+            $('.v-wrap').css('margin-top', `${px.video_margin_top}px`);
 
             let title = $('#viewbox_report');
             let pwrap = $('#playerWrap');
             title.css({
-                'margin': '8px 0px', 'padding': '0px', 'height': 'auto'
+                'margin': `${px.title_margin}px 0px`, 'padding': '0px', 'height': 'auto'
             });
             title.insertAfter('#playerWrap');
+
+            setSize();
         }
 
         // 等待页面加载完毕再rearrange
