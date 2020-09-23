@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.5
+// @version      0.7.6
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -74,48 +74,52 @@ const px = {
 };
 
 function getHeightConstrain(pageH) {
-    // 容纳标题+点赞的高度
-    var headerH = 0, header = $c('#internationalHeader');
-    if(header) {
-        headerH = header.offsetHeight;
+    var toolH = 1e5;
+    if(isNormal) {
+        // 容纳标题+点赞的高度
+        var headerH = 0, header = $c('#internationalHeader');
+        if(header) {
+            headerH = header.offsetHeight;
+        }
+        toolH = pageH - (headerH + px.video_margin_top + px.title_margin + px.dmBarH +
+            $c('#viewbox_report').offsetHeight + 16 + $c('#arc_toolbar_report').offsetHeight);
+        // log(toolH, 0.68*pageH);
     }
-    var toolH = pageH - (headerH + px.video_margin_top + px.title_margin + px.dmBarH +
-        $c('#viewbox_report').offsetHeight + 16 + $c('#arc_toolbar_report').offsetHeight);
-    log(toolH, 0.68*pageH);
     var h = window.isWide ? (.743 * pageH - 108.7) : Math.min(0.68 * pageH, toolH);
     return Math.round(h * 16/9)
 }
 
 function setSizeNormal() {
-    var isWide = window.isWide, pageH = window.innerHeight;
-    var pageW = window.innerWidth,
-        w1 = getHeightConstrain(pageH), // 用height限制宽度
-        w2 = pageW - 2*px.appMinPad - px.rconW, // 用width限制，实为margin+iswide限制
-        videoW = Math.min(w1, w2);
-    videoW = Math.clamp(videoW, 638, 1280); // 视频区非宽屏下的宽度
-    var allW = videoW + px.rconW; // 视频+右栏部分宽度
-    var videoH = px.dmBarH + (window.hasBlackSide && !isWide ? 
-        Math.round((videoW - px.blackSide2W + (isWide ? px.rconW : 0)) * (9 / 16)) + px.blackSide2H : 
-        Math.round((videoW + (isWide ? px.rconW : 0)) * (9 / 16)));
-    var getcss = function(selector, css) {
-        for (var pageH = selector + " {", keys = Object.keys(css), i = 0; i < keys.length; i++)
-            pageH += keys[i] + ": " + css[keys[i]] + "!important;";
-        return pageH + "}\n"
-    }
-    var a = getcss(".v-wrap", {
-        width: allW + "px",
-        padding: "0 " + (allW + 152 > pageW ? 76 : 0) + "px"
-    }) + getcss(".l-con", {
-        width: allW - px.rconW + "px"
-    }) + getcss("#bofqi", {
-        width: allW - (isWide ? 0 : px.rconW) + "px",
-        height: videoH + "px",
-        position: isWide ? "relative" : "static"
-    }) + getcss("#danmukuBox", {
-        "margin-top": isWide ? videoH + 28 + "px" : "0"
-    }) + getcss("#playerWrap", {
-        height: isWide ? videoH - 0 + "px" : "auto"
-    });
+    var i = window.isWide,
+        e = 350,
+        n = window.innerHeight;
+    w = window.innerWidth,
+        w1 = getHeightConstrain(n),
+        w2 = w - 152 - e,
+        min = w1 > w2 ? w2 : w1,
+        min < 638 && (min = 638),
+        1630 < min && (min = 1630);
+    var t, o = min + e;
+    t = window.hasBlackSide && !window.isWide ? Math.round((min - 14 + (i ? e : 0)) * (9 / 16) + 46) + 96 : Math.round((min + (i ? e : 0)) * (9 / 16)) + 46;
+    var r = function(i, e) {
+            for (var n = i + " {", t = Object.keys(e), o = 0; o < t.length; o++)
+                n += t[o] + ": " + e[t[o]] + "!important;";
+            return n + "}\n"
+        },
+        a = r(".v-wrap", {
+            width: o + "px",
+            padding: "0 " + (o + 152 > w ? 76 : 0) + "px"
+        }) + r(".l-con", {
+            width: o - e + "px"
+        }) + r("#bilibili-player", {
+            width: o - (i ? 0 : e) + "px",
+            height: t + "px",
+            position: i ? "relative" : "static"
+        }) + r("#danmukuBox", {
+            "margin-top": i ? t + 28 + "px" : "0"
+        }) + r("#playerWrap", {
+            height: i ? t - 0 + "px" : "auto"
+        });
     setSizeStyle.innerHTML = a
 }
 
@@ -189,18 +193,18 @@ function setSizeMini() {
     var getcss = isBangumi?
     function() {
         let w = 320 - 70 + parseFloat($('#app').css('margin-right').replace('px', ''))
-        return `#bofqi.stardust-player.mini-player.report-wrap-module {
+        return `#bilibili-player.stardust-player.mini-player.report-wrap-module {
   width: ${w}px!important;
   height: ${w*2/3}px!important;
 }`
     } :
     function() {
         let w = 320 - 70 + parseFloat($('.v-wrap').css('margin-right').replace('px', ''))
-        return `#bofqi.mini-player {
+        return `#bilibili-player.mini-player {
     width: ${w}px!important;
     height: ${w*2/3}px!important;
 }
-#bofqi.mini-player .player {
+#bilibili-player.mini-player .player {
     width: ${w}px!important;
     height: ${w*2/3}px!important;
 }`
@@ -224,7 +228,7 @@ function setSizeMini() {
             }
         }
     })
-    miniObs.observe($c('#bofqi'), {
+    miniObs.observe($c('#bilibili-player'), {
         attributes: true, attributeOldValue: false, attributeFilter: ['class']
     })
 }
