@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.6
+// @version      0.7.7
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -77,12 +77,14 @@ function getHeightConstrain(pageH) {
     var toolH = 1e5;
     if(isNormal) {
         // 容纳标题+点赞的高度
-        var headerH = 0, header = $c('#internationalHeader');
-        if(header) {
-            headerH = header.offsetHeight;
-        }
-        toolH = pageH - (headerH + px.video_margin_top + px.title_margin + px.dmBarH +
-            $c('#viewbox_report').offsetHeight + 16 + $c('#arc_toolbar_report').offsetHeight);
+        // var headerH = 0, header = $c('#internationalHeader');
+        // if(header) {
+        //     headerH = header.offsetHeight;
+        // }
+        // toolH = pageH - (headerH + px.video_margin_top + px.title_margin + px.dmBarH +
+        //     $c('#viewbox_report').offsetHeight + 16 + $c('#arc_toolbar_report').offsetHeight);
+        toolH = pageH - (56 + px.video_margin_top + px.title_margin + px.dmBarH +
+            50 + 16 + $c('#arc_toolbar_report').offsetHeight);
         // log(toolH, 0.68*pageH);
     }
     var h = window.isWide ? (.743 * pageH - 108.7) : Math.min(0.68 * pageH, toolH);
@@ -253,7 +255,6 @@ if(true) {
         // 0.24.2 调整元素顺序
         function rearrange() {
             $('.v-wrap').css('margin-top', `${px.video_margin_top}px`);
-
             let title = $('#viewbox_report');
             let pwrap = $('#playerWrap');
             title.css({
@@ -261,7 +262,7 @@ if(true) {
             });
             title.insertAfter('#playerWrap');
 
-            setSize();
+            // setSize();
         }
 
         // 等待页面加载完毕再rearrange
