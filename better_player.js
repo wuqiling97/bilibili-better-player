@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.7
+// @version      0.7.8
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -87,7 +87,8 @@ function getHeightConstrain(pageH) {
             50 + 16 + $c('#arc_toolbar_report').offsetHeight);
         // log(toolH, 0.68*pageH);
     }
-    var h = window.isWide ? (.743 * pageH - 108.7) : Math.min(0.68 * pageH, toolH);
+    // var h = window.isWide ? (.743 * pageH - 108.7) : Math.min(0.68 * pageH, toolH);
+    var h = (.743 * pageH - 108.7);
     return Math.round(h * 16/9)
 }
 
@@ -105,7 +106,7 @@ function setSizeNormal() {
     t = window.hasBlackSide && !window.isWide ? Math.round((min - 14 + (i ? e : 0)) * (9 / 16) + 46) + 96 : Math.round((min + (i ? e : 0)) * (9 / 16)) + 46;
     var r = function(i, e) {
             for (var n = i + " {", t = Object.keys(e), o = 0; o < t.length; o++)
-                n += t[o] + ": " + e[t[o]] + "!important;";
+                n += t[o] + ": " + e[t[o]] + ";";
             return n + "}\n"
         },
         a = r(".v-wrap", {
@@ -192,47 +193,51 @@ function setSizeBangumi() {
 }
 
 function setSizeMini() {
+    const getwh = function(selector) {
+        let w = 320 - 70 + parseFloat($(selector).css('margin-right').replace('px', ''));
+        w = Math.clamp(w, 320, 410);
+        return `width: ${w}px!important; height: ${(w*2/3).toFixed(2)}px!important;`;
+    }
+
     var getcss = isBangumi?
     function() {
-        let w = 320 - 70 + parseFloat($('#app').css('margin-right').replace('px', ''))
+        let wh = getwh('#app');
         return `#bilibili-player.stardust-player.mini-player.report-wrap-module {
-  width: ${w}px!important;
-  height: ${w*2/3}px!important;
+    ${wh}
 }`
     } :
     function() {
-        let w = 320 - 70 + parseFloat($('.v-wrap').css('margin-right').replace('px', ''))
-        return `#bilibili-player.mini-player {
-    width: ${w}px!important;
-    height: ${w*2/3}px!important;
-}
-#bilibili-player.mini-player .player {
-    width: ${w}px!important;
-    height: ${w*2/3}px!important;
+        let wh = getwh('.v-wrap');
+        return `#bilibili-player.mini-player, #bilibili-player.mini-player:before, #bilibili-player.mini-player .player {
+    ${wh}
 }`
     };
 
     var style = $("<style id='tamper' type='text/css'></style>");
     $('body').append(style)
+    style.text(getcss());
+    window.addEventListener('resize', function() {
+        style.text(getcss());
+    })
 
-    miniObs = new MutationObserver(function(mutationsList) {
-        // console.log(mutationsList);
-        for(let mutation of mutationsList) {
-            if(mutation.attributeName === 'class') {
-                let bofqi = $(mutation.target)
-                if(bofqi.hasClass('mini-player')) {
-                    style.text(getcss())
-                    // log('mini player', w)
-                } else {
-                    style.text('')
-                    // log('no mini')
-                }
-            }
-        }
-    })
-    miniObs.observe($c('#bilibili-player'), {
-        attributes: true, attributeOldValue: false, attributeFilter: ['class']
-    })
+    // miniObs = new MutationObserver(function(mutationsList) {
+    //     // console.log(mutationsList);
+    //     for(let mutation of mutationsList) {
+    //         if(mutation.attributeName === 'class') {
+    //             let bofqi = $(mutation.target)
+    //             if(bofqi.hasClass('mini-player')) {
+    //                 style.text(getcss())
+    //                 // log('mini player', w)
+    //             } else {
+    //                 // style.text('')
+    //                 // log('no mini')
+    //             }
+    //         }
+    //     }
+    // })
+    // miniObs.observe($c('#bilibili-player'), {
+    //     attributes: true, attributeOldValue: false, attributeFilter: ['class']
+    // })
 }
 
 //$ 完善播放器
@@ -261,8 +266,6 @@ if(true) {
                 'margin': `${px.title_margin}px 0px`, 'padding': '0px', 'height': 'auto'
             });
             title.insertAfter('#playerWrap');
-
-            // setSize();
         }
 
         // 等待页面加载完毕再rearrange

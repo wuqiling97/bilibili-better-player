@@ -146,6 +146,41 @@ function setSize() {
     setSizeStyle.innerHTML = a
 }
 
+// ver 2.43.0 去掉了important
+function setSize() {
+    var i = window.isWide
+        , e = 350
+        , n = window.innerHeight;
+    w = window.innerWidth,
+    w1 = parseInt(16 * (.743 * n - 108.7) / 9),
+    w2 = w - 152 - e,
+    min = w1 > w2 ? w2 : w1,
+    min < 638 && (min = 638),
+    1630 < min && (min = 1630);
+    var t, o = min + e;
+    t = window.hasBlackSide && !window.isWide ? Math.round((min - 14 + (i ? e : 0)) * (9 / 16) + 46) + 96 : Math.round((min + (i ? e : 0)) * (9 / 16)) + 46;
+    var r = function(i, e) {
+        for (var n = i + " {", t = Object.keys(e), o = 0; o < t.length; o++)
+            n += t[o] + ": " + e[t[o]] + ";";
+        return n + "}\n"
+    }
+        , a = r(".v-wrap", {
+        width: o + "px",
+        padding: "0 " + (o + 152 > w ? 76 : 0) + "px"
+    }) + r(".l-con", {
+        width: o - e + "px"
+    }) + r("#bilibili-player", {
+        width: o - (i ? 0 : e) + "px",
+        height: t + "px",
+        position: i ? "relative" : "static"
+    }) + r("#danmukuBox", {
+        "margin-top": i ? t + 28 + "px" : "0"
+    }) + r("#playerWrap", {
+        height: i ? t - 0 + "px" : "auto"
+    });
+    setSizeStyle.innerHTML = a
+}
+
 //番剧
 // 有special cover(背景图): 你的名字 www.bilibili.com/bangumi/play/ss12176
 
