@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.8
+// @version      0.7.9
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -73,6 +73,12 @@ const px = {
     title_margin: 8
 };
 
+const sel = {
+    title: '#viewbox_report', playerwrap: '#playerWrap',
+    toubi: '#arc_toolbar_report'
+};
+// window.sel = sel;
+
 function getHeightConstrain(pageH) {
     var toolH = 1e5;
     if(isNormal) {
@@ -82,10 +88,9 @@ function getHeightConstrain(pageH) {
         //     headerH = header.offsetHeight;
         // }
         // toolH = pageH - (headerH + px.video_margin_top + px.title_margin + px.dmBarH +
-        //     $c('#viewbox_report').offsetHeight + 16 + $c('#arc_toolbar_report').offsetHeight);
+        //     $c(sel.title).offsetHeight + 16 + $c(sel.toubi).offsetHeight);
         toolH = pageH - (56 + px.video_margin_top + px.title_margin + px.dmBarH +
-            50 + 16 + $c('#arc_toolbar_report').offsetHeight);
-        // log(toolH, 0.68*pageH);
+            50 + 16 + $c(sel.toubi).offsetHeight);
     }
     // var h = window.isWide ? (.743 * pageH - 108.7) : Math.min(0.68 * pageH, toolH);
     var h = (.743 * pageH - 108.7);
@@ -219,25 +224,6 @@ function setSizeMini() {
     window.addEventListener('resize', function() {
         style.text(getcss());
     })
-
-    // miniObs = new MutationObserver(function(mutationsList) {
-    //     // console.log(mutationsList);
-    //     for(let mutation of mutationsList) {
-    //         if(mutation.attributeName === 'class') {
-    //             let bofqi = $(mutation.target)
-    //             if(bofqi.hasClass('mini-player')) {
-    //                 style.text(getcss())
-    //                 // log('mini player', w)
-    //             } else {
-    //                 // style.text('')
-    //                 // log('no mini')
-    //             }
-    //         }
-    //     }
-    // })
-    // miniObs.observe($c('#bilibili-player'), {
-    //     attributes: true, attributeOldValue: false, attributeFilter: ['class']
-    // })
 }
 
 //$ 完善播放器
@@ -258,21 +244,35 @@ if(true) {
         window.setSize = setSizeNormal; // setSize
 
         // 0.24.2 调整元素顺序
-        function rearrange() {
-            $('.v-wrap').css('margin-top', `${px.video_margin_top}px`);
-            let title = $('#viewbox_report');
-            let pwrap = $('#playerWrap');
-            title.css({
-                'margin': `${px.title_margin}px 0px`, 'padding': '0px', 'height': 'auto'
-            });
-            title.insertAfter('#playerWrap');
+        // 2.43.2 依赖<div class="gg-floor-module report-wrap-module report-scroll-module" id="bannerAd">的添加，否则无法检测到mutation
+        function rearrange(mutationsList) {
+            console.log(mutationsList);
+
+            let pwrap = $(sel.playerwrap);
+            let title = $(sel.title);
+            if (title[0].nextSibling == pwrap[0]) {
+                pwrap.css('margin-top', `${px.video_margin_top}px`);
+                title.css({
+                    'margin': `${px.title_margin}px 0px`, 'padding': '0px', 'height': 'auto'
+                });
+                title.insertAfter(pwrap);
+            }
         }
 
+        miniObs = new MutationObserver(rearrange);
+        miniObs.observe($c('.l-con'), {
+            attributes: false, childList: true
+        })
+        window.title = $(sel.title);
+
         // 等待页面加载完毕再rearrange
-        conditionExec(
-            () => $c('span.like').innerText !== '点赞',
-            rearrange, 500
-        );
+        // conditionExec(
+        //     () => {
+        //         let ele = $c('.bilibili-player-video-top-title');
+        //         return ele && ele.innerText;
+        //     },
+        //     rearrange, 500
+        // );
 
     } else if(isBangumi) {
         $(window).off('resize.stardust');
