@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.9
+// @version      0.7.10
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -244,10 +244,7 @@ if(true) {
         window.setSize = setSizeNormal; // setSize
 
         // 0.24.2 调整元素顺序
-        // 2.43.2 依赖<div class="gg-floor-module report-wrap-module report-scroll-module" id="bannerAd">的添加，否则无法检测到mutation
-        function rearrange(mutationsList) {
-            console.log(mutationsList);
-
+        function rearrange() {
             let pwrap = $(sel.playerwrap);
             let title = $(sel.title);
             if (title[0].nextSibling == pwrap[0]) {
@@ -259,20 +256,23 @@ if(true) {
             }
         }
 
-        miniObs = new MutationObserver(rearrange);
-        miniObs.observe($c('.l-con'), {
-            attributes: false, childList: true
-        })
-        window.title = $(sel.title);
-
-        // 等待页面加载完毕再rearrange
-        // conditionExec(
-        //     () => {
-        //         let ele = $c('.bilibili-player-video-top-title');
-        //         return ele && ele.innerText;
-        //     },
-        //     rearrange, 500
-        // );
+        miniObs = new MutationObserver(function(mutationList) {
+            console.log(mutationList);
+            for(record of mutationList) {
+                // 使用3个判据：lcon 评论上面的不可见banner, rcon 直播、和上面的不可见banner
+                let cond = Array.from(record.addedNodes).some(
+                    e => e.id.includes('bannerAd') ||
+                    e.id.includes('live_recommand_report') ||
+                    e.id.includes('right-bottom-banner')
+                );
+                if (cond) {
+                    log('rearrange fired');
+                    setTimeout(rearrange, 0);
+                }
+            }
+        });
+        miniObs.observe($c('.l-con'), { childList: true });
+        miniObs.observe($c('.r-con'), { childList: true });
 
     } else if(isBangumi) {
         $(window).off('resize.stardust');
