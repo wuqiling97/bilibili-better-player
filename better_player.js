@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.10
+// @version      0.7.11
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -46,13 +46,10 @@ function getDanmuFontsize() {
     var s = JSON.parse(localStorage.bilibili_player_settings);
     return s.setting_config.fontsize;
 }
-window.setDanmuFontsize = setDanmuFontsize;
-window.getDanmuFontsize = getDanmuFontsize;
 
 // 对付延迟加载
 function conditionExec(condition, task, timeout) {
     if(!condition()) {
-        // log('wait', timeout, 'for', task);
         setTimeout(() => conditionExec(condition, task, timeout), timeout);
     } else {
         task();
@@ -232,8 +229,7 @@ const isBangumi = location.pathname.indexOf('bangumi') !== -1;
 const isWatchlater = location.pathname.indexOf('watchlater') !== -1;
 const isNormal = !(isBangumi || isWatchlater);
 if(true) {
-    log('origin fontsize', getDanmuFontsize());
-    // setDanmuFontsize(userFontSize);
+    // log('origin fontsize', getDanmuFontsize());
 
     // 修改mini player
     if(!isWatchlater) {
@@ -255,24 +251,29 @@ if(true) {
                 title.insertAfter(pwrap);
             }
         }
-
-        miniObs = new MutationObserver(function(mutationList) {
+        
+        // 过早重排导致重新加载时，作为保底
+        let miniObs = new MutationObserver(function(mutationList) {
             console.log(mutationList);
-            for(record of mutationList) {
-                // 使用3个判据：lcon 评论上面的不可见banner, rcon 直播、和上面的不可见banner
+            for(let record of mutationList) {
                 let cond = Array.from(record.addedNodes).some(
-                    e => e.id.includes('bannerAd') ||
-                    e.id.includes('live_recommand_report') ||
-                    e.id.includes('right-bottom-banner')
+                    e => e.id.includes('viewbox_report')
                 );
                 if (cond) {
                     log('rearrange fired');
-                    setTimeout(rearrange, 0);
+                    setTimeout(rearrange, 500);
                 }
             }
         });
         miniObs.observe($c('.l-con'), { childList: true });
-        miniObs.observe($c('.r-con'), { childList: true });
+        
+        conditionExec(
+            () => {
+                let ele = $c('.bilibili-player-video-top-title');
+                return ele && ele.innerText && $c('.bb-comment');
+            },
+            rearrange, 200
+        );
 
     } else if(isBangumi) {
         $(window).off('resize.stardust');
@@ -301,7 +302,6 @@ function toggleRuleState() {
             default:
         }
     })
-    // console.log('on, off = ', on, off)
     const shouldon = on < off;
 
     rules.each((idx, ele) => {
