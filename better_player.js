@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.7.11
+// @version      0.8.0
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -215,8 +215,8 @@ function setSizeMini() {
 }`
     };
 
-    var style = $("<style id='tamper' type='text/css'></style>");
-    $('body').append(style)
+    var style = $("<style id='bbp-miniplayer' type='text/css'></style>");
+    $('head').append(style)
     style.text(getcss());
     window.addEventListener('resize', function() {
         style.text(getcss());
@@ -239,42 +239,33 @@ if(true) {
     if(isNormal) {
         window.setSize = setSizeNormal; // setSize
 
-        // 0.24.2 调整元素顺序
-        function rearrange() {
-            let pwrap = $(sel.playerwrap);
-            let title = $(sel.title);
-            if (title[0].nextSibling == pwrap[0]) {
-                pwrap.css('margin-top', `${px.video_margin_top}px`);
-                title.css({
-                    'margin': `${px.title_margin}px 0px`, 'padding': '0px', 'height': 'auto'
-                });
-                title.insertAfter(pwrap);
-            }
-        }
+        const css = `
+.v-wrap .l-con,
+.v-wrap .r-con {
+    display: flex;
+    flex-direction: column;
+}
+${sel.playerwrap} {
+    order: -1;
+    margin-top: ${px.video_margin_top}px;
+}
+${sel.title} {
+    margin-top: ${px.title_margin}px !important;
+    padding: 0 !important;
+    height: auto !important;
+}
+/* .v-wrap .r-con .up-info {
+    padding-top: 0 !important;
+} */
+.video-info .video-data .argue,
+.video-info .video-data .copyright {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}`
+        var style = $("<style id='bbp-player-on-top' type='text/css'></style>");
+        $('head').append(style)
+        style.text(css);
         
-        // 过早重排导致重新加载时，作为保底
-        let miniObs = new MutationObserver(function(mutationList) {
-            console.log(mutationList);
-            for(let record of mutationList) {
-                let cond = Array.from(record.addedNodes).some(
-                    e => e.id.includes('viewbox_report')
-                );
-                if (cond) {
-                    log('rearrange fired');
-                    setTimeout(rearrange, 500);
-                }
-            }
-        });
-        miniObs.observe($c('.l-con'), { childList: true });
-        
-        conditionExec(
-            () => {
-                let ele = $c('.bilibili-player-video-top-title');
-                return ele && ele.innerText && $c('.bb-comment');
-            },
-            rearrange, 200
-        );
-
     } else if(isBangumi) {
         $(window).off('resize.stardust');
         window.setSize = setSizeBangumi; // setSize
