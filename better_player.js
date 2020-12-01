@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.8.0
+// @version      0.8.1
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -48,9 +48,9 @@ function getDanmuFontsize() {
 }
 
 // 对付延迟加载
-function conditionExec(condition, task, timeout) {
+function conditionExec(condition, task, interval) {
     if(!condition()) {
-        setTimeout(() => conditionExec(condition, task, timeout), timeout);
+        setTimeout(() => conditionExec(condition, task, interval), interval);
     } else {
         task();
     }
@@ -232,9 +232,9 @@ if(true) {
     // log('origin fontsize', getDanmuFontsize());
 
     // 修改mini player
-    if(!isWatchlater) {
-        setSizeMini();
-    }
+    // if(!isWatchlater) {
+    //     setSizeMini();
+    // }
     // 修改播放器大小
     if(isNormal) {
         window.setSize = setSizeNormal; // setSize
