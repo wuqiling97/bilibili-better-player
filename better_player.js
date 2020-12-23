@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili better player
 // @namespace    http://tampermonkey.net/
-// @version      0.8.1
+// @version      0.8.2
 // @description  扩大新版播放器、更多弹幕字号、弹幕屏蔽一键同步
 // @author       You
 // @match        http*://www.bilibili.com/video/av*
@@ -129,67 +129,66 @@ function setSizeNormal() {
 }
 
 function setSizeBangumi() {
-    // 有special cover(背景图): 你的名字 www.bilibili.com/bangumi/play/ss12176
-    var maxW = md.specialCover ? 1070 : 1280
-    , rcon_w = 350
-    , pageH = $(window).height()
-    , pageW = $(window).width()
-    , thh = md.specialCover ? Math.round((pageH - 264) * 16 / 9 - rcon_w) : getHeightConstrain(pageH)
-    , thw = pageW - 152 - rcon_w
-    , videoW = Math.min(thw, thh);
-    videoW = Math.clamp(videoW, 638, maxW);
-    var appWidth = videoW + rcon_w
-    , overflow = pageW < appWidth + 152;
-    var isWide = window.isWide;
-
-    $(".main-container").css({
-        width: overflow ? appWidth + 76 : appWidth,
-        paddingLeft: (overflow ? 76 : 0) + "px",
-        marginLeft: overflow ? "0" : "",
-        marginRight: overflow ? "0" : ""
-    })
-    if (md.specialCover) {
-        var h = Math.round(9 * appWidth / 16 + 46);
-        $("#player_module").css({
-            height: h,
-            width: appWidth,
-            paddingLeft: "",
-            left: overflow ? 76 : "",
-            transform: overflow ? "none" : "",
-            webkitTransform: overflow ? "none" : ""
-        }),
-        $(".special-cover").css({height: h + 218}),
-        $(".plp-l").css({paddingTop: h + 24}),
-        $(".plp-r").css({marginTop: h + 40}),
-        $("#danmukuBox").css({top: -(h + 40)})
+    var e = md.specialCover ? 1070 : 1280
+        , i = 350
+        , t = window.innerHeight || document.documentElement.clientHeight
+        , o = window.innerWidth || window.document.documentElement.clientWidth
+        , n = Math.round(md.specialCover ? 16 * (t - 264) / 9 - i : getHeightConstrain(t))
+        , d = o - 152 - i
+        , a = d < n ? d : n;
+    a < 638 && (a = 638),
+    e < a && (a = e);
+    var s = a + i
+        , r = o < s + 152
+        , l = document.querySelector(".main-container");
+    if (l.style.width = (r ? s + 76 : s) + "px",
+    l.style.paddingLeft = (r ? 76 : 0) + "px",
+    l.style.marginLeft = r ? "0" : "",
+    l.style.marginRight = r ? "0" : "",
+    md.specialCover) {
+        var _ = Math.round(9 * s / 16 + 46);
+        (y = document.querySelector("#player_module")).style.height = _ + "px",
+        y.style.width = s + "px",
+        y.style.paddingLeft = "",
+        y.style.left = r ? "76px" : "",
+        y.style.transform = r ? "none" : "",
+        y.style.webkitTransform = r ? "none" : "";
+        var p = document.querySelector(".special-cover")
+            , w = document.querySelector(".plp-l")
+            , c = document.querySelector(".plp-r")
+            , m = document.querySelector("#danmukuBox");
+        p.style.height = _ + 218 + "px",
+        w.style.paddingTop = _ + 24 + "px",
+        c.style.marginTop = _ + 40 + "px",
+        window.isWide ? (m.style.top = "0px",
+        m.style.position = "relative") : (m.style.top = -(_ + 40) + "px",
+        m.style.position = "absolute")
     } else {
-        var h = 46 + (window.hasBlackSide && !isWide ?
-            Math.round((videoW - 14 + (isWide ? rcon_w : 0)) * (9 / 16)) + 96 :
-            Math.round((videoW + (isWide ? rcon_w : 0)) * (9 / 16)))
-        $("#danmukuBox").css({top: ""});
-        if(window.isWide) {
-            $("#player_module").css({
-                height: h,
-                width: "",
-                paddingLeft: overflow ? 76 : "",
-                left: "",
-                transform: "",
-                webkitTransform: ""
-            });
-            $(".plp-l").css({paddingTop: h - 0})
-            $(".plp-r").css({marginTop: h + 16})
-            // scrollTo(0, 55)
+        var u = parseInt(9 * (a + (window.isWide ? i : 0)) / 16) + 46 + (window.hasBlackSide && !window.isWide ? 96 : 0);
+        if ((m = document.querySelector("#danmukuBox")).style.top = "",
+        window.isWide) {
+            (y = document.querySelector("#player_module")).style.height = u - 0 + "px",
+            y.style.width = "",
+            y.style.paddingLeft = r ? "76px" : "",
+            y.style.left = "",
+            y.style.transform = "",
+            y.style.webkitTransform = "";
+            w = document.querySelector(".plp-l"),
+            c = document.querySelector(".plp-r");
+            w.style.paddingTop = u - 0 + "px",
+            c.style.marginTop = u + 16 + "px"
         } else {
-            $("#player_module").css({
-                height: h - 0,
-                width: "",
-                paddingLeft: "",
-                left: "",
-                transform: "",
-                webkitTransform: ""
-            })
-            $(".plp-l, .plp-r").removeAttr("style")
-            // scrollTo(0, 0)
+            var y;
+            (y = document.querySelector("#player_module")).style.height = u - 0 + "px",
+            y.style.width = "",
+            y.style.paddingLeft = "",
+            y.style.left = "",
+            y.style.transform = "",
+            y.style.webkitTransform = "";
+            w = document.querySelector(".plp-l"),
+            c = document.querySelector(".plp-r");
+            w.removeAttribute("style"),
+            c.removeAttribute("style")
         }
     }
 }
@@ -237,7 +236,7 @@ if(true) {
     // }
     // 修改播放器大小
     if(isNormal) {
-        window.setSize = setSizeNormal; // setSize
+        // window.setSize = setSizeNormal; // setSize
 
         const css = `
 .v-wrap .l-con,
@@ -267,10 +266,10 @@ ${sel.title} {
         style.text(css);
         
     } else if(isBangumi) {
-        $(window).off('resize.stardust');
-        window.setSize = setSizeBangumi; // setSize
-        $(window).on('resize.stardust', setSize);
-        setSize();
+        // $(window).off('resize.stardust');
+        // window.setSize = setSizeBangumi; // setSize
+        // $(window).on('resize.stardust', setSize);
+        // setSize();
         if(!md.specialCover) {
             $('#app').css('margin-top', '10px');
         } else {
